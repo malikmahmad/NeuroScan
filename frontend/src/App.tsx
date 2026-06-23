@@ -20,23 +20,24 @@ import MetricsDashboard from "./components/MetricsDashboard";
 type Mode = "single" | "compare";
 
 export default function App() {
-  const [modelsStatus, setModelsStatus] = useState<ModelsStatus | null>(null);
+  const [modelsStatus, setModelsStatus]   = useState<ModelsStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
-
-  const [mode, setMode] = useState<Mode>("single");
+  const [mode, setMode]                   = useState<Mode>("single");
   const [selectedModel, setSelectedModel] = useState<ModelName>("efficientnet");
+  const [imageUrl, setImageUrl]           = useState<string | null>(null);
+  const [analyzing, setAnalyzing]         = useState(false);
+  const [error, setError]                 = useState<string | null>(null);
 
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const [singleResult, setSingleResult] = useState<{ classification: ClassifyResult; segmentation?: SegmentResult | SegmentNote } | null>(null);
+  const [singleResult, setSingleResult] = useState<{
+    classification: ClassifyResult;
+    segmentation?: SegmentResult | SegmentNote;
+  } | null>(null);
   const [compareResult, setCompareResult] = useState<CompareResult | null>(null);
 
   useEffect(() => {
     getModelsStatus()
       .then(setModelsStatus)
-      .catch(() => setError("Could not reach the backend. Is the API server running?"))
+      .catch(() => setError("Could not reach the backend. Is the server running on port 8000?"))
       .finally(() => setStatusLoading(false));
   }, []);
 
@@ -49,24 +50,22 @@ export default function App() {
 
     try {
       if (mode === "single") {
-        const result = await analyze(file, selectedModel);
-        setSingleResult(result);
+        setSingleResult(await analyze(file, selectedModel));
       } else {
-        const result = await classifyCompare(file);
-        setCompareResult(result);
+        setCompareResult(await classifyCompare(file));
       }
     } catch (e) {
       if (e instanceof ApiError && e.status === 503) {
-        setError(`That model isn't trained yet: ${e.message}`);
+        setError(`Model not available: ${e.message}`);
       } else {
-        setError(e instanceof Error ? e.message : "Something went wrong during analysis.");
+        setError(e instanceof Error ? e.message : "Analysis failed.");
       }
     } finally {
       setAnalyzing(false);
     }
   };
 
-  const noModelsAvailable =
+  const noModels =
     modelsStatus !== null &&
     !modelsStatus.cnn &&
     !modelsStatus.efficientnet &&
@@ -77,18 +76,17 @@ export default function App() {
       <header className="app__header">
         <div>
           <h1>NeuroScan</h1>
-          <p className="app__tagline">Comparative deep learning analysis for brain tumor MRI</p>
+          <p className="app__tagline">Comparative deep learning for brain tumor MRI analysis</p>
         </div>
       </header>
 
       <main className="app__main">
         <ModelStatusBar status={modelsStatus} loading={statusLoading} />
 
-        {noModelsAvailable && (
+        {noModels && (
           <div className="banner banner--warn">
-            No trained model checkpoints found on the server. Train at least one model using the
-            notebooks in <code className="mono">notebooks/</code> and place the resulting weights in{" "}
-            <code className="mono">backend/models/</code>, then restart the API.
+            No model weights found. Train the models using the notebooks and place the{" "}
+            <code>.pth</code> files in <code>backend/models/</code>.
           </div>
         )}
 
@@ -96,22 +94,17 @@ export default function App() {
 
         <div className="mode-row">
           <div className="mode-toggle" role="tablist" aria-label="Analysis mode">
-            <button
-              role="tab"
-              aria-selected={mode === "single"}
-              className={mode === "single" ? "mode-toggle__btn mode-toggle__btn--active" : "mode-toggle__btn"}
-              onClick={() => setMode("single")}
-            >
-              Single model
-            </button>
-            <button
-              role="tab"
-              aria-selected={mode === "compare"}
-              className={mode === "compare" ? "mode-toggle__btn mode-toggle__btn--active" : "mode-toggle__btn"}
-              onClick={() => setMode("compare")}
-            >
-              Compare all 3
-            </button>
+            {(["single", "compare"] as Mode[]).map((m) => (
+              <button
+                key={m}
+                role="tab"
+                aria-selected={mode === m}
+                className={`mode-toggle__btn${mode === m ? " mode-toggle__btn--active" : ""}`}
+                onClick={() => setMode(m)}
+              >
+                {m === "single" ? "Single model" : "Compare all 3"}
+              </button>
+            ))}
           </div>
 
           {mode === "single" && (
@@ -119,7 +112,7 @@ export default function App() {
               {(["cnn", "efficientnet", "vit"] as ModelName[]).map((m) => (
                 <button
                   key={m}
-                  className={selectedModel === m ? "model-select__btn model-select__btn--active" : "model-select__btn"}
+                  className={`model-select__btn${selectedModel === m ? " model-select__btn--active" : ""}`}
                   onClick={() => setSelectedModel(m)}
                   disabled={modelsStatus ? !modelsStatus[m] : false}
                 >
@@ -149,12 +142,14 @@ export default function App() {
           />
         )}
 
-        {!analyzing && mode === "compare" && compareResult && <ComparisonView result={compareResult} />}
+        {!analyzing && mode === "compare" && compareResult && (
+          <ComparisonView result={compareResult} />
+        )}
       </main>
 
       <footer className="app__footer">
-        Research and educational tool only. Not a certified diagnostic device — predictions must
-        not be used for clinical decision-making.
+        Research and educational use only — not a certified medical device.
+        Do not use for clinical decision-making.
       </footer>
 
       <style>{`
@@ -174,12 +169,9 @@ export default function App() {
           padding-bottom: var(--space-4);
           border-bottom: 1px solid var(--border-subtle);
         }
-        .app__header h1 {
-          font-size: 24px;
-          color: var(--accent-teal);
-        }
+        .app__header h1 { font-size: 24px; color: var(--accent-teal); }
         .app__tagline {
-          margin: var(--space-1) 0 0 0;
+          margin: var(--space-1) 0 0;
           color: var(--text-tertiary);
           font-size: 13px;
         }
@@ -215,10 +207,7 @@ export default function App() {
           background: var(--accent-teal-bg);
           color: var(--accent-teal);
         }
-        .model-select {
-          display: inline-flex;
-          gap: var(--space-2);
-        }
+        .model-select { display: inline-flex; gap: var(--space-2); }
         .model-select__btn {
           background: var(--bg-panel);
           border: 1px solid var(--border-subtle);
@@ -231,10 +220,7 @@ export default function App() {
           border-color: var(--accent-blue);
           color: var(--accent-blue);
         }
-        .model-select__btn:disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-        }
+        .model-select__btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .banner {
           padding: var(--space-3) var(--space-4);
           border-radius: var(--radius-md);
@@ -251,10 +237,6 @@ export default function App() {
           color: var(--danger);
           border: 1px solid rgba(227, 100, 100, 0.3);
         }
-        .status-text {
-          color: var(--text-secondary);
-          font-size: 14px;
-        }
         .analyzing-state {
           display: flex;
           align-items: center;
@@ -269,6 +251,7 @@ export default function App() {
           animation: spin 0.7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .status-text { color: var(--text-secondary); font-size: 14px; }
         .app__footer {
           margin-top: auto;
           padding-top: var(--space-5);

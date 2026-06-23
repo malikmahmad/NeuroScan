@@ -48,7 +48,12 @@ export interface ModelTestResult {
   macro_f1: number;
   weighted_f1: number;
   roc_auc_ovr: number | null;
-  per_class: Record<string, { precision: number; recall: number; "f1-score": number; support: number }>;
+  per_class: Record<string, {
+    precision: number;
+    recall: number;
+    "f1-score": number;
+    support: number;
+  }>;
   confusion_matrix: number[][];
 }
 
@@ -62,7 +67,10 @@ export interface ModelHistory {
 export interface ClassificationMetrics {
   available: boolean;
   message?: string;
-  models?: Record<string, { test: ModelTestResult | null; history: ModelHistory | null }>;
+  models?: Record<string, {
+    test: ModelTestResult | null;
+    history: ModelHistory | null;
+  }>;
 }
 
 export interface SegmentationMetrics {
@@ -72,7 +80,7 @@ export interface SegmentationMetrics {
   history?: { train_loss: number[]; val_dice: number[]; val_iou: number[] };
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
     super(message);
@@ -88,26 +96,26 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
       const body = await res.json();
       detail = body.detail || detail;
     } catch {
-      /* response wasn't JSON — keep statusText */
+      // not JSON, keep statusText
     }
     throw new ApiError(detail, res.status);
   }
   return res.json() as Promise<T>;
 }
 
-export async function getModelsStatus(): Promise<ModelsStatus> {
+export function getModelsStatus(): Promise<ModelsStatus> {
   return request<ModelsStatus>("/api/models/status", { method: "GET" });
 }
 
-export async function getClassificationMetrics(): Promise<ClassificationMetrics> {
+export function getClassificationMetrics(): Promise<ClassificationMetrics> {
   return request<ClassificationMetrics>("/api/metrics/classification", { method: "GET" });
 }
 
-export async function getSegmentationMetrics(): Promise<SegmentationMetrics> {
+export function getSegmentationMetrics(): Promise<SegmentationMetrics> {
   return request<SegmentationMetrics>("/api/metrics/segmentation", { method: "GET" });
 }
 
-export async function classify(file: File, modelName: ModelName): Promise<ClassifyResult> {
+export function classify(file: File, modelName: ModelName): Promise<ClassifyResult> {
   const form = new FormData();
   form.append("file", file);
   return request<ClassifyResult>(`/api/classify?model_name=${modelName}`, {
@@ -116,19 +124,19 @@ export async function classify(file: File, modelName: ModelName): Promise<Classi
   });
 }
 
-export async function classifyCompare(file: File): Promise<CompareResult> {
+export function classifyCompare(file: File): Promise<CompareResult> {
   const form = new FormData();
   form.append("file", file);
   return request<CompareResult>("/api/classify/compare", { method: "POST", body: form });
 }
 
-export async function segment(file: File): Promise<SegmentResult> {
+export function segment(file: File): Promise<SegmentResult> {
   const form = new FormData();
   form.append("file", file);
   return request<SegmentResult>("/api/segment", { method: "POST", body: form });
 }
 
-export async function analyze(file: File, classifier: ModelName): Promise<AnalyzeResult> {
+export function analyze(file: File, classifier: ModelName): Promise<AnalyzeResult> {
   const form = new FormData();
   form.append("file", file);
   return request<AnalyzeResult>(`/api/analyze?classifier=${classifier}`, {
@@ -136,5 +144,3 @@ export async function analyze(file: File, classifier: ModelName): Promise<Analyz
     body: form,
   });
 }
-
-export { ApiError };

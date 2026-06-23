@@ -5,27 +5,28 @@ interface Props {
   loading: boolean;
 }
 
-const LABELS: { key: keyof ModelsStatus; label: string }[] = [
-  { key: "cnn", label: "CNN" },
-  { key: "efficientnet", label: "EfficientNet" },
-  { key: "vit", label: "ViT" },
-  { key: "unet_segmentation", label: "U-Net Segmentation" },
+const MODELS: { key: keyof ModelsStatus; label: string }[] = [
+  { key: "cnn",               label: "CNN" },
+  { key: "efficientnet",      label: "EfficientNet" },
+  { key: "vit",               label: "ViT" },
+  { key: "unet_segmentation", label: "U-Net Seg." },
 ];
 
 export default function ModelStatusBar({ status, loading }: Props) {
   return (
     <div className="status-bar">
-      <span className="status-bar__label">Model availability</span>
+      <span className="status-bar__label">Models</span>
       <div className="status-bar__dots">
-        {LABELS.map(({ key, label }) => {
-          const available = status?.[key] ?? false;
+        {MODELS.map(({ key, label }) => {
+          const ready = status?.[key] ?? false;
+          const title = ready ? `${label} — ready` : `${label} — not loaded`;
           return (
-            <div className="status-dot" key={key} title={available ? `${label} — checkpoint loaded` : `${label} — not trained yet`}>
+            <div className="status-dot" key={key} title={title}>
               <span
-                className="status-dot__indicator"
+                className="status-dot__pip"
                 style={{
-                  background: loading ? "var(--text-tertiary)" : available ? "var(--accent-teal)" : "transparent",
-                  borderColor: loading ? "var(--text-tertiary)" : available ? "var(--accent-teal)" : "var(--border-strong)",
+                  background:    loading ? "var(--text-tertiary)" : ready ? "var(--accent-teal)" : "transparent",
+                  borderColor:   loading ? "var(--text-tertiary)" : ready ? "var(--accent-teal)" : "var(--border-strong)",
                 }}
               />
               <span className="status-dot__label">{label}</span>
@@ -46,9 +47,9 @@ export default function ModelStatusBar({ status, loading }: Props) {
           border-radius: var(--radius-md);
         }
         .status-bar__label {
-          font-size: 12px;
+          font-size: 11px;
           text-transform: uppercase;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.07em;
           color: var(--text-tertiary);
           white-space: nowrap;
         }
@@ -62,7 +63,7 @@ export default function ModelStatusBar({ status, loading }: Props) {
           align-items: center;
           gap: var(--space-2);
         }
-        .status-dot__indicator {
+        .status-dot__pip {
           width: 8px;
           height: 8px;
           border-radius: 50%;

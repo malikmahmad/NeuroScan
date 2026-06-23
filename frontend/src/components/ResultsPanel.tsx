@@ -46,7 +46,6 @@ function downloadReport(
   const contentW = W - margin * 2;
   let y = 20;
 
-  const hex = (color: string) => color;
   const teal   = "#0d9e6e";
   const amber  = "#c47a1a";
   const dark   = "#1a1a2e";

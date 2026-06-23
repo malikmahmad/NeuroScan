@@ -1,39 +1,38 @@
-# %% [markdown]
-# # Explainability — Grad-CAM (CNN / EfficientNet) + Attention Rollout (ViT)
-#
-# IMPORTANT METHODOLOGICAL NOTE (put this in the paper's Methodology section):
-# Grad-CAM relies on convolutional feature maps and gradients flowing through
-# them — it is NOT directly valid for a pure transformer like ViT, which has
-# no spatial conv feature map. Applying "Grad-CAM" to a ViT and calling it
-# Grad-CAM (as some example repos do) is methodologically incorrect.
-# The correct technique for transformers is "Attention Rollout" (Abnar &
-# Zuidema, 2020), which aggregates self-attention weights across all blocks
-# to show which image patches the model actually attended to.
-#
-# This script implements BOTH correctly:
-#   - Grad-CAM            -> for the Custom CNN and EfficientNet-B0
-#   - Attention Rollout    -> for ViT-B/16
-#
-# Run this AFTER train_classification.py (needs outputs/weights/*_best.pth).
+"""
+Explainability figures: Grad-CAM for CNN/EfficientNet, Attention Rollout for ViT.
 
-# %%
+Why two different methods?
+Grad-CAM works by computing gradients with respect to a convolutional feature
+map. ViT has no convolutional layers, so there is no spatial feature map to
+hook into — applying Grad-CAM to a transformer is technically incorrect.
+Attention Rollout (Abnar & Zuidema, 2020) is the right approach for ViT: it
+multiplies attention matrices across all encoder layers, tracking how much
+each input patch influenced the final classification token.
+
+Run this after train_classification.py. It expects the weights in outputs/weights/.
+"""
+
 import json
+import os
 from pathlib import Path
 
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from torchvision import models, transforms
 from PIL import Image
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-OUTPUT_DIR = Path("outputs")
-(OUTPUT_DIR / "figures" / "explainability").mkdir(parents=True, exist_ok=True)
-
 IMAGE_SIZE = 224
+
+OUTPUT_DIR = Path("outputs")
+FIG_DIR = OUTPUT_DIR / "figures" / "explainability"
+FIG_DIR.mkdir(parents=True, exist_ok=True)
+
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
-IMAGENET_STD = [0.229, 0.224, 0.225]
+IMAGENET_STD  = [0.229, 0.224, 0.225]
 
 eval_transform = transforms.Compose([
     transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
@@ -43,16 +42,13 @@ eval_transform = transforms.Compose([
 
 with open(OUTPUT_DIR / "metrics" / "cnn_test_results.json") as f:
     CLASS_NAMES = list(json.load(f)["per_class"].keys())
+
 NUM_CLASSES = len(CLASS_NAMES)
 
 
-# %%
-# ---------------------------------------------------------------------------
-# Rebuild architectures (must match train_classification.py exactly) and
-# load the best checkpoints saved during training.
-# ---------------------------------------------------------------------------
+# --- Model loaders -----------------------------------------------------------
+
 def load_cnn():
-    import torch.nn as nn
     model = nn.Sequential(
         nn.Conv2d(3, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(), nn.MaxPool2d(2),
         nn.Conv2d(32, 64, 3, padding=1), nn.BatchNorm2d(64), nn.ReLU(), nn.MaxPool2d(2),
@@ -63,21 +59,19 @@ def load_cnn():
         nn.Linear(128, NUM_CLASSES),
     )
     model.load_state_dict(torch.load(OUTPUT_DIR / "weights" / "cnn_best.pth", map_location=DEVICE))
-    # index 14 = ReLU after the last conv block (best spatial resolution before final pool)
+    # Index 14 is the ReLU right after the last conv block, before the final pool.
     return model.to(DEVICE).eval(), model[14]
 
 
 def load_efficientnet():
-    import torch.nn as nn
     model = models.efficientnet_b0(weights=None)
     in_features = model.classifier[1].in_features
     model.classifier = nn.Sequential(nn.Dropout(0.3), nn.Linear(in_features, NUM_CLASSES))
     model.load_state_dict(torch.load(OUTPUT_DIR / "weights" / "efficientnet_best.pth", map_location=DEVICE))
-    return model.to(DEVICE).eval(), model.features[-1]  # last conv block for Grad-CAM hook
+    return model.to(DEVICE).eval(), model.features[-1]
 
 
 def load_vit():
-    import torch.nn as nn
     model = models.vit_b_16(weights=None)
     in_features = model.heads.head.in_features
     model.heads.head = nn.Linear(in_features, NUM_CLASSES)
@@ -85,10 +79,8 @@ def load_vit():
     return model.to(DEVICE).eval()
 
 
-# %%
-# ---------------------------------------------------------------------------
-# Grad-CAM (for CNN + EfficientNet)
-# ---------------------------------------------------------------------------
+# --- Grad-CAM ----------------------------------------------------------------
+
 class GradCAM:
     def __init__(self, model, target_layer):
         self.model = model
@@ -111,163 +103,114 @@ class GradCAM:
         self.model.zero_grad()
         output[0, class_idx].backward()
 
-        weights = self.gradients.mean(dim=(2, 3), keepdim=True)  # global-avg-pool gradients
-        cam = (weights * self.activations).sum(dim=1, keepdim=True)
-        cam = F.relu(cam)
+        weights = self.gradients.mean(dim=(2, 3), keepdim=True)
+        cam = F.relu((weights * self.activations).sum(dim=1, keepdim=True))
         cam = F.interpolate(cam, size=(IMAGE_SIZE, IMAGE_SIZE), mode="bilinear", align_corners=False)
         cam = cam.squeeze().cpu().numpy()
         cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
         return cam, class_idx
 
 
-# %%
-# ---------------------------------------------------------------------------
-# Attention Rollout (for ViT) — Abnar & Zuidema, 2020
-# ---------------------------------------------------------------------------
+# --- Attention Rollout -------------------------------------------------------
+
 @torch.no_grad()
-def vit_attention_rollout(model, input_tensor, discard_ratio=0.0, head_fusion="mean"):
-    attentions = []
-
-    def hook(module, inp, out):
-        # torchvision's MultiheadAttention block returns (out, weights) only if
-        # need_weights=True; we patch the forward to request weights.
-        pass
-
-    # torchvision ViT encoder layers wrap nn.MultiheadAttention; we monkeypatch
-    # forward to capture attention weights for each block.
+def attention_rollout(model, input_tensor):
+    """
+    Aggregate self-attention across all ViT encoder layers.
+    The CLS token row of the final product tells us which patches the model
+    attended to — used as a spatial explanation map.
+    """
     handles = []
     captured = {}
 
-    def make_hook(idx):
-        def hook_fn(module, inp, kwargs):
-            kwargs["need_weights"] = True
-            kwargs["average_attn_weights"] = (head_fusion == "mean")
-            return inp, kwargs
-        return hook_fn
-
-    # Simpler approach: re-run forward manually capturing attn via output hook
-    for i, layer in enumerate(model.encoder.layers):
-        def make_capture(idx):
-            def capture(module, inp, out):
-                # self_attention module of EncoderBlock returns (x, attn_weights)
-                pass
-            return capture
-
-    # torchvision's EncoderBlock.forward calls self.self_attention(x, x, x, need_weights=False) internally,
-    # so we override need_weights via a forward hook on self_attention with input modification.
     for i, layer in enumerate(model.encoder.layers):
         sa = layer.self_attention
 
-        def fwd_pre_hook(module, args, kwargs, idx=i):
+        def pre_hook(module, args, kwargs, idx=i):
             kwargs["need_weights"] = True
             kwargs["average_attn_weights"] = True
             return args, kwargs
 
-        h = sa.register_forward_pre_hook(fwd_pre_hook, with_kwargs=True)
-        handles.append(h)
+        def post_hook(module, inp, out, idx=i):
+            captured[idx] = out[1].detach()
 
-        def fwd_hook(module, inp, out, idx=i):
-            # out = (attn_output, attn_weights)
-            captured[idx] = out[1].detach()  # (batch, tokens, tokens)
+        handles.append(sa.register_forward_pre_hook(pre_hook, with_kwargs=True))
+        handles.append(sa.register_forward_hook(post_hook))
 
-        h2 = sa.register_forward_hook(fwd_hook)
-        handles.append(h2)
-
-    _ = model(input_tensor)
+    model(input_tensor)
     for h in handles:
         h.remove()
 
     n_layers = len(model.encoder.layers)
-    attn_mats = [captured[i][0] for i in range(n_layers)]  # drop batch dim -> (tokens, tokens)
+    tokens = captured[0][0].shape[-1]
 
-    tokens = attn_mats[0].shape[-1]
-    result = torch.eye(tokens, device=input_tensor.device)
-    for attn in attn_mats:
-        attn = attn + torch.eye(tokens, device=input_tensor.device)  # residual connection
+    rollout = torch.eye(tokens, device=input_tensor.device)
+    for i in range(n_layers):
+        attn = captured[i][0] + torch.eye(tokens, device=input_tensor.device)
         attn = attn / attn.sum(dim=-1, keepdim=True)
-        result = attn @ result
+        rollout = attn @ rollout
 
-    # CLS token's attention to all patch tokens (token 0 = CLS)
-    cls_attention = result[0, 1:]  # drop CLS-to-CLS
-    n_patches = cls_attention.shape[0]
-    grid_size = int(n_patches ** 0.5)
-    cam = cls_attention.reshape(grid_size, grid_size).cpu().numpy()
+    cls_attn = rollout[0, 1:]
+    grid = int(cls_attn.shape[0] ** 0.5)
+    cam = cls_attn.reshape(grid, grid).cpu().numpy()
     cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
     return cam
 
 
-# %%
-# ---------------------------------------------------------------------------
-# Visualization helper
-# ---------------------------------------------------------------------------
-def overlay_heatmap(pil_image, cam, alpha=0.45):
-    cam_resized = np.array(Image.fromarray((cam * 255).astype(np.uint8)).resize(pil_image.size, Image.BILINEAR))
-    cmap = plt.get_cmap("jet")
-    heatmap = cmap(cam_resized / 255.0)[:, :, :3]
+# --- Visualization -----------------------------------------------------------
+
+def blend_heatmap(pil_image, cam, alpha=0.45):
+    cam_up = np.array(
+        Image.fromarray((cam * 255).astype(np.uint8)).resize(pil_image.size, Image.BILINEAR)
+    ) / 255.0
+    heatmap = plt.get_cmap("jet")(cam_up)[:, :, :3]
     base = np.array(pil_image.convert("RGB")) / 255.0
-    overlay = (1 - alpha) * base + alpha * heatmap
-    return np.clip(overlay, 0, 1)
+    return np.clip((1 - alpha) * base + alpha * heatmap, 0, 1)
 
 
-def visualize_sample(image_path, true_label_name):
-    pil_image = Image.open(image_path).convert("RGB")
-    input_tensor = eval_transform(pil_image).unsqueeze(0).to(DEVICE)
+def visualize(image_path, true_label):
+    pil = Image.open(image_path).convert("RGB")
+    tensor = eval_transform(pil).unsqueeze(0).to(DEVICE)
 
     fig, axes = plt.subplots(1, 4, figsize=(16, 4))
-    axes[0].imshow(pil_image)
-    axes[0].set_title(f"Original\nTrue: {true_label_name}")
+
+    axes[0].imshow(pil)
+    axes[0].set_title(f"Original\nTrue: {true_label}")
     axes[0].axis("off")
 
-    # CNN Grad-CAM
-    cnn_model, cnn_layer = load_cnn()
-    cam_gen = GradCAM(cnn_model, cnn_layer)
-    cam, pred_idx = cam_gen.generate(input_tensor.clone().requires_grad_())
-    axes[1].imshow(overlay_heatmap(pil_image, cam))
-    axes[1].set_title(f"CNN Grad-CAM\nPred: {CLASS_NAMES[pred_idx]}")
+    cnn, cnn_layer = load_cnn()
+    cam, pred = GradCAM(cnn, cnn_layer).generate(tensor.clone().requires_grad_())
+    axes[1].imshow(blend_heatmap(pil, cam))
+    axes[1].set_title(f"CNN — Grad-CAM\nPred: {CLASS_NAMES[pred]}")
     axes[1].axis("off")
 
-    # EfficientNet Grad-CAM
-    eff_model, eff_layer = load_efficientnet()
-    cam_gen = GradCAM(eff_model, eff_layer)
-    cam, pred_idx = cam_gen.generate(input_tensor.clone().requires_grad_())
-    axes[2].imshow(overlay_heatmap(pil_image, cam))
-    axes[2].set_title(f"EfficientNet Grad-CAM\nPred: {CLASS_NAMES[pred_idx]}")
+    eff, eff_layer = load_efficientnet()
+    cam, pred = GradCAM(eff, eff_layer).generate(tensor.clone().requires_grad_())
+    axes[2].imshow(blend_heatmap(pil, cam))
+    axes[2].set_title(f"EfficientNet — Grad-CAM\nPred: {CLASS_NAMES[pred]}")
     axes[2].axis("off")
 
-    # ViT Attention Rollout
-    vit_model = load_vit()
-    cam = vit_attention_rollout(vit_model, input_tensor)
-    with torch.no_grad():
-        pred_idx = vit_model(input_tensor).argmax(dim=1).item()
-    axes[3].imshow(overlay_heatmap(pil_image, cam))
-    axes[3].set_title(f"ViT Attention Rollout\nPred: {CLASS_NAMES[pred_idx]}")
+    vit = load_vit()
+    cam = attention_rollout(vit, tensor)
+    pred = vit(tensor).argmax(dim=1).item()
+    axes[3].imshow(blend_heatmap(pil, cam))
+    axes[3].set_title(f"ViT — Attention Rollout\nPred: {CLASS_NAMES[pred]}")
     axes[3].axis("off")
 
     plt.tight_layout()
-    save_path = OUTPUT_DIR / "figures" / "explainability" / f"{Path(image_path).stem}_explainability.png"
-    plt.savefig(save_path, dpi=150)
+    out_path = FIG_DIR / f"{Path(image_path).stem}_explainability.png"
+    plt.savefig(out_path, dpi=150)
     plt.show()
-    print(f"Saved: {save_path}")
+    print(f"Saved: {out_path}")
 
 
-# %%
-# ---------------------------------------------------------------------------
-# Run on a handful of test images — pick 1 correctly-classified example per
-# class for the paper's qualitative figure.
-# ---------------------------------------------------------------------------
-import os
+# --- Run on one sample per class ---------------------------------------------
 
 KAGGLE_PATH = "/kaggle/input/brain-tumor-mri-dataset"
 DATA_ROOT = KAGGLE_PATH if os.path.exists(KAGGLE_PATH) else "data"
 TEST_DIR = Path(DATA_ROOT) / "Testing"
 
-for class_name in CLASS_NAMES:
-    class_dir = TEST_DIR / class_name
-    sample_images = list(class_dir.glob("*"))[:1]
-    for img_path in sample_images:
-        visualize_sample(img_path, class_name)
-
-# %% [markdown]
-# Use 4-6 of these side-by-side panels as Figure X in the paper's Results
-# section — one row per class is a strong, standard layout for this kind of
-# qualitative explainability comparison.
+for cls in CLASS_NAMES:
+    samples = list((TEST_DIR / cls).glob("*"))[:1]
+    for img_path in samples:
+        visualize(img_path, cls)

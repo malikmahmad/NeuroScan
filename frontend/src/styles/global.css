@@ -1,24 +1,14 @@
-/* ===========================================================================
-   DESIGN TOKENS
-   Direction: a clinical imaging-instrument console — the kind of dark,
-   precise surface a radiology viewer or lab monitor uses so the actual scan
-   is what draws the eye, not the chrome around it.
+/*
+  Design direction: dark, precise, clinical.
+  The kind of surface a radiology viewer uses — where the scan itself
+  is the focus, not the interface around it.
 
-   Color:   near-black navy canvas, cool slate panels, a phosphor-teal
-            accent (vital-sign-monitor "normal" reading) and an amber accent
-            reserved only for "tumor detected" / attention states — mirroring
-            how real monitoring equipment separates "nominal" from "alert".
-   Type:    Space Grotesk for display (technical, slightly architectural),
-            IBM Plex Sans for body (scientific-instrument heritage),
-            IBM Plex Mono for all numeric/data readouts (confidence %,
-            class probabilities) so numbers read like instrument output.
-   Signature: the upload dropzone has a slow horizontal scan-line sweep,
-            referencing the actual sweep of an MRI/CT acquisition — used
-            once, with restraint, not repeated as decoration elsewhere.
-=========================================================================== */
+  Teal = normal / clear reading (like a vital-sign monitor in range)
+  Amber = alert / tumor detected
+  Everything else stays neutral so it doesn't compete with the images.
+*/
 
 :root {
-  /* Color */
   --bg-canvas: #0a0e13;
   --bg-panel: #11161d;
   --bg-panel-raised: #161d26;
@@ -40,12 +30,10 @@
 
   --danger: #e36464;
 
-  /* Type */
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "SF Mono", monospace;
 
-  /* Spacing scale */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -78,17 +66,14 @@ body {
   min-height: 100vh;
 }
 
-h1,
-h2,
-h3 {
+h1, h2, h3 {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.01em;
   margin: 0;
 }
 
-code,
-.mono {
+code, .mono {
   font-family: var(--font-mono);
 }
 
@@ -105,9 +90,7 @@ a:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }

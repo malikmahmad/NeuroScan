@@ -1,19 +1,22 @@
 """
-place_outputs.py — Run this after downloading Kaggle outputs.
+place_outputs.py
 
-After training on Kaggle:
-  1. Download the entire "outputs" folder from the Classification notebook
-  2. Download the entire "outputs_segmentation" folder from the Segmentation notebook
-  3. Place both folders inside  brain-tumor-ai-pro/notebooks/
+After downloading the training outputs from Kaggle:
+  1. Download the "outputs" folder from the classification notebook
+  2. Download the "outputs_segmentation" folder from the segmentation notebook
+  3. Place both inside  notebooks/
   4. Run:  python notebooks/place_outputs.py
 
-This script verifies all expected files are present and prints a summary.
+The script checks which files are present and copies any missing weights
+into backend/models/ automatically.
 """
+
+import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
-expected_classification = [
+CLASSIFICATION_FILES = [
     "outputs/weights/cnn_best.pth",
     "outputs/weights/efficientnet_best.pth",
     "outputs/weights/vit_best.pth",
@@ -26,38 +29,40 @@ expected_classification = [
     "outputs/metrics/model_comparison.csv",
 ]
 
-expected_segmentation = [
+SEGMENTATION_FILES = [
     "outputs_segmentation/weights/unet_best.pth",
     "outputs_segmentation/metrics/segmentation_test_results.json",
     "outputs_segmentation/metrics/segmentation_history.json",
 ]
 
-print("\n=== NeuroScan — Output File Checker ===\n")
+print("\nNeuroScan — output file check\n")
 
-all_ok = True
-for rel in expected_classification + expected_segmentation:
+missing = []
+for rel in CLASSIFICATION_FILES + SEGMENTATION_FILES:
     path = ROOT / rel
-    status = "✅" if path.exists() else "❌ MISSING"
-    if not path.exists():
-        all_ok = False
-    print(f"  {status}  {rel}")
+    ok = path.exists()
+    print(f"  {'ok' if ok else 'MISSING':8}  {rel}")
+    if not ok:
+        missing.append(rel)
 
 print()
-if all_ok:
-    print("✅ All files present. Metrics dashboard will show full results.")
-    print("   Copy weights to backend/models/ if not done already:")
-    weights = ["cnn_best.pth", "efficientnet_best.pth", "vit_best.pth", "unet_best.pth"]
-    for w in weights:
-        src_cls = ROOT / "outputs" / "weights" / w
-        src_seg = ROOT / "outputs_segmentation" / "weights" / w
-        src = src_cls if src_cls.exists() else src_seg if src_seg.exists() else None
-        dst = ROOT.parent / "backend" / "models" / w
-        if src and not dst.exists():
-            import shutil
-            shutil.copy2(src, dst)
-            print(f"   Copied {w} → backend/models/")
-        elif dst.exists():
-            print(f"   {w} already in backend/models/ ✅")
+
+if missing:
+    print(f"Missing {len(missing)} file(s). Download the full outputs/ folders from Kaggle.")
+    print("See README.md for step-by-step instructions.")
 else:
-    print("❌ Some files missing. Make sure you downloaded the full outputs/ folder from Kaggle.")
-    print("   See README.md Step 1 for instructions.")
+    print("All files present.")
+    models_dir = ROOT.parent / "backend" / "models"
+    weight_sources = [
+        ROOT / "outputs" / "weights" / "cnn_best.pth",
+        ROOT / "outputs" / "weights" / "efficientnet_best.pth",
+        ROOT / "outputs" / "weights" / "vit_best.pth",
+        ROOT / "outputs_segmentation" / "weights" / "unet_best.pth",
+    ]
+    for src in weight_sources:
+        dst = models_dir / src.name
+        if src.exists() and not dst.exists():
+            shutil.copy2(src, dst)
+            print(f"  Copied {src.name} -> backend/models/")
+        elif dst.exists():
+            print(f"  {src.name} already in backend/models/")

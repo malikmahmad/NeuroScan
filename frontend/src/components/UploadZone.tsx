@@ -26,11 +26,12 @@ export default function UploadZone({ onFileSelected, disabled }: Props) {
 
   return (
     <div
-      className={`upload-zone ${isDragOver ? "upload-zone--drag" : ""} ${disabled ? "upload-zone--disabled" : ""}`}
-      onDragOver={(e) => {
-        e.preventDefault();
-        if (!disabled) setIsDragOver(true);
-      }}
+      className={[
+        "upload-zone",
+        isDragOver ? "upload-zone--drag" : "",
+        disabled ? "upload-zone--disabled" : "",
+      ].join(" ")}
+      onDragOver={(e) => { e.preventDefault(); if (!disabled) setIsDragOver(true); }}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={disabled ? undefined : handleDrop}
       onClick={() => !disabled && inputRef.current?.click()}
@@ -41,7 +42,9 @@ export default function UploadZone({ onFileSelected, disabled }: Props) {
         if (!disabled && (e.key === "Enter" || e.key === " ")) inputRef.current?.click();
       }}
     >
+      {/* Slow scan-line sweep — references the horizontal acquisition sweep of an MRI */}
       <div className="upload-zone__sweep" aria-hidden="true" />
+
       <div className="upload-zone__content">
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
           <rect x="6" y="4" width="28" height="32" rx="3" stroke="currentColor" strokeWidth="1.5" />
@@ -52,6 +55,7 @@ export default function UploadZone({ onFileSelected, disabled }: Props) {
         <p className="upload-zone__title">Drop an MRI slice here</p>
         <p className="upload-zone__subtitle">PNG, JPEG, or TIFF — axial T1/T2/FLAIR slice</p>
       </div>
+
       <input
         ref={inputRef}
         type="file"
@@ -73,7 +77,7 @@ export default function UploadZone({ onFileSelected, disabled }: Props) {
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: border-color 0.2s ease, background 0.2s ease;
+          transition: border-color 0.2s, background 0.2s;
           min-height: 220px;
         }
         .upload-zone:hover,
@@ -110,8 +114,6 @@ export default function UploadZone({ onFileSelected, disabled }: Props) {
           color: var(--text-tertiary);
           margin: 0;
         }
-        /* Signature element: a slow horizontal scan-line, referencing the
-           sweep of an actual MRI/CT acquisition pass. */
         .upload-zone__sweep {
           position: absolute;
           top: 0;
@@ -129,8 +131,8 @@ export default function UploadZone({ onFileSelected, disabled }: Props) {
           animation: sweep 5s ease-in-out infinite;
         }
         @keyframes sweep {
-          0% { left: -30%; }
-          50% { left: 100%; }
+          0%   { left: -30%; }
+          50%  { left: 100%; }
           100% { left: 100%; }
         }
       `}</style>
