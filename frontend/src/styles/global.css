@@ -1,0 +1,114 @@
+/* ===========================================================================
+   DESIGN TOKENS
+   Direction: a clinical imaging-instrument console — the kind of dark,
+   precise surface a radiology viewer or lab monitor uses so the actual scan
+   is what draws the eye, not the chrome around it.
+
+   Color:   near-black navy canvas, cool slate panels, a phosphor-teal
+            accent (vital-sign-monitor "normal" reading) and an amber accent
+            reserved only for "tumor detected" / attention states — mirroring
+            how real monitoring equipment separates "nominal" from "alert".
+   Type:    Space Grotesk for display (technical, slightly architectural),
+            IBM Plex Sans for body (scientific-instrument heritage),
+            IBM Plex Mono for all numeric/data readouts (confidence %,
+            class probabilities) so numbers read like instrument output.
+   Signature: the upload dropzone has a slow horizontal scan-line sweep,
+            referencing the actual sweep of an MRI/CT acquisition — used
+            once, with restraint, not repeated as decoration elsewhere.
+=========================================================================== */
+
+:root {
+  /* Color */
+  --bg-canvas: #0a0e13;
+  --bg-panel: #11161d;
+  --bg-panel-raised: #161d26;
+  --border-subtle: #232c36;
+  --border-strong: #344150;
+
+  --text-primary: #e7edf3;
+  --text-secondary: #8fa0af;
+  --text-tertiary: #5d6e7d;
+
+  --accent-teal: #3ddc97;
+  --accent-teal-dim: #2a9d73;
+  --accent-teal-bg: rgba(61, 220, 151, 0.1);
+
+  --accent-amber: #f0a857;
+  --accent-amber-bg: rgba(240, 168, 87, 0.12);
+
+  --accent-blue: #5b9fe3;
+
+  --danger: #e36464;
+
+  /* Type */
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", monospace;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+code,
+.mono {
+  font-family: var(--font-mono);
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+button:focus-visible,
+[tabindex]:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

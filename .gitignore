@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Model weights (large, trained locally/on Kaggle — never commit blindly)
+backend/models/*.pth
+!backend/models/.gitkeep
+
+# Notebook outputs
+notebooks/outputs/
+notebooks/outputs_segmentation/
+notebooks/data/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# OS
+.DS_Store
