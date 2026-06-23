@@ -1,19 +1,3 @@
-# %% [markdown]
-# # Brain Tumor Segmentation — U-Net
-#
-# Classification tells you what type of tumor is present.
-# Segmentation tells you where it is in the slice.
-#
-# Dataset: LGG MRI Segmentation by Mateusz Buda
-# https://www.kaggle.com/datasets/mateuszbuda/lgg-mri-segmentation
-#
-# Each case folder has FLAIR slices (*.tif) and matching binary masks (*_mask.tif).
-# Reference: Buda M, Saha A, Mazurowski MA. Computers in Biology and Medicine, 2019.
-#
-# How to run:
-#   New Kaggle Notebook -> GPU T4 x2 -> Add Data -> lgg-mri-segmentation -> Run All
-
-# %%
 import os
 import glob
 import json
@@ -47,8 +31,9 @@ for sub in ["weights", "figures", "metrics"]:
 
 assert os.path.exists(DATA_ROOT), f"Dataset not found at {DATA_ROOT}"
 
-# %%
-# Build (image, mask) path pairs
+# -----------------------------------------------------------------------
+# Build (image, mask) pairs
+# -----------------------------------------------------------------------
 all_images = sorted(glob.glob(os.path.join(DATA_ROOT, "*", "*.tif")))
 image_mask_pairs = [
     (p, p.replace(".tif", "_mask.tif"))
@@ -65,8 +50,9 @@ for _, mask_path in image_mask_pairs:
         negative += 1
 print(f"Tumor-positive: {positive}  Tumor-negative: {negative}")
 
-# %%
+# -----------------------------------------------------------------------
 # Dataset
+# -----------------------------------------------------------------------
 class BrainMRISegDataset(Dataset):
     def __init__(self, pairs, image_size=IMAGE_SIZE, augment=False):
         self.pairs      = pairs
@@ -103,7 +89,6 @@ train_ds, val_ds, test_ds = random_split(
     generator=torch.Generator().manual_seed(SEED)
 )
 
-# Override dataset on val/test to disable augmentation
 val_ds.dataset  = BrainMRISegDataset(image_mask_pairs, augment=False)
 test_ds.dataset = BrainMRISegDataset(image_mask_pairs, augment=False)
 
@@ -112,9 +97,9 @@ val_loader   = DataLoader(val_ds,   batch_size=BATCH_SIZE, shuffle=False, num_wo
 test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 print(f"Train: {n_train}  Val: {n_val}  Test: {n_test}")
 
-# %%
-# U-Net architecture
-
+# -----------------------------------------------------------------------
+# U-Net
+# -----------------------------------------------------------------------
 class DoubleConv(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
@@ -161,29 +146,26 @@ class UNet(nn.Module):
         d2 = self.dec2(torch.cat([self.up2(d3), e2], dim=1))
         d1 = self.dec1(torch.cat([self.up1(d2), e1], dim=1))
 
-        return self.out_conv(d1)  # raw logits, apply sigmoid outside
+        return self.out_conv(d1)
 
-# %%
+# -----------------------------------------------------------------------
 # Loss and metrics
-
+# -----------------------------------------------------------------------
 def dice_coefficient(pred, target, smooth=1e-6):
     pred = (torch.sigmoid(pred) > 0.5).float()
-    intersection = (pred * target).sum(dim=(1, 2, 3))
+    inter = (pred * target).sum(dim=(1, 2, 3))
     union = pred.sum(dim=(1, 2, 3)) + target.sum(dim=(1, 2, 3))
-    return ((2 * intersection + smooth) / (union + smooth)).mean().item()
+    return ((2 * inter + smooth) / (union + smooth)).mean().item()
 
 
 def iou_score(pred, target, smooth=1e-6):
-    pred = (torch.sigmoid(pred) > 0.5).float()
-    intersection = (pred * target).sum(dim=(1, 2, 3))
-    union = pred.sum(dim=(1, 2, 3)) + target.sum(dim=(1, 2, 3)) - intersection
-    return ((intersection + smooth) / (union + smooth)).mean().item()
+    pred  = (torch.sigmoid(pred) > 0.5).float()
+    inter = (pred * target).sum(dim=(1, 2, 3))
+    union = pred.sum(dim=(1, 2, 3)) + target.sum(dim=(1, 2, 3)) - inter
+    return ((inter + smooth) / (union + smooth)).mean().item()
 
 
 class DiceBCELoss(nn.Module):
-    """Dice + BCE combined. Pure BCE struggles with the tumor/background
-    imbalance since tumor pixels are a small fraction of each slice."""
-
     def __init__(self):
         super().__init__()
         self.bce = nn.BCEWithLogitsLoss()
@@ -196,8 +178,9 @@ class DiceBCELoss(nn.Module):
         dice_loss = 1 - ((2 * inter + smooth) / (union + smooth)).mean()
         return bce_loss + dice_loss
 
-# %%
-# Training loop
+# -----------------------------------------------------------------------
+# Training
+# -----------------------------------------------------------------------
 model     = UNet().to(DEVICE)
 criterion = DiceBCELoss()
 optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
@@ -240,13 +223,14 @@ for epoch in range(EPOCHS):
         best_dice = val_dice
         torch.save(model.state_dict(), OUTPUT_DIR / "weights" / "unet_best.pth")
 
-    print(f"Epoch {epoch+1}/{EPOCHS} | loss={train_loss:.4f} | val_dice={val_dice:.4f} | val_iou={val_iou:.4f}")
+    print(f"Epoch {epoch+1}/{EPOCHS} | loss={train_loss:.4f} | dice={val_dice:.4f} | iou={val_iou:.4f}")
 
 with open(OUTPUT_DIR / "metrics" / "segmentation_history.json", "w") as f:
     json.dump(history, f, indent=2)
 
-# %%
-# Test set evaluation
+# -----------------------------------------------------------------------
+# Test evaluation
+# -----------------------------------------------------------------------
 model.load_state_dict(torch.load(OUTPUT_DIR / "weights" / "unet_best.pth"))
 model.eval()
 
@@ -267,8 +251,9 @@ print(f"\nTest — Dice: {results['test_dice']:.4f}  IoU: {results['test_iou']:.
 with open(OUTPUT_DIR / "metrics" / "segmentation_test_results.json", "w") as f:
     json.dump(results, f, indent=2)
 
-# %%
+# -----------------------------------------------------------------------
 # Qualitative figure
+# -----------------------------------------------------------------------
 def visualize_predictions(n=4):
     model.eval()
     images, masks = next(iter(test_loader))
@@ -283,18 +268,11 @@ def visualize_predictions(n=4):
     for i in range(n):
         img = (images[i] * std + mean).clamp(0, 1).permute(1, 2, 0).cpu().numpy()
 
-        axes[i, 0].imshow(img)
-        axes[i, 0].set_title("MRI Slice")
-        axes[i, 0].axis("off")
-
-        axes[i, 1].imshow(masks[i, 0].cpu().numpy(), cmap="gray")
-        axes[i, 1].set_title("Ground Truth")
-        axes[i, 1].axis("off")
-
+        axes[i, 0].imshow(img);                                    axes[i, 0].set_title("MRI Slice");        axes[i, 0].axis("off")
+        axes[i, 1].imshow(masks[i, 0].cpu().numpy(), cmap="gray"); axes[i, 1].set_title("Ground Truth");    axes[i, 1].axis("off")
         axes[i, 2].imshow(img)
         axes[i, 2].imshow(preds[i, 0].cpu().numpy(), cmap="Reds", alpha=0.5)
-        axes[i, 2].set_title("Predicted Overlay")
-        axes[i, 2].axis("off")
+        axes[i, 2].set_title("Predicted Overlay"); axes[i, 2].axis("off")
 
     plt.tight_layout()
     plt.savefig(OUTPUT_DIR / "figures" / "segmentation_qualitative.png", dpi=150)
@@ -302,6 +280,3 @@ def visualize_predictions(n=4):
 
 
 visualize_predictions()
-
-# %% [markdown]
-# Copy outputs_segmentation/weights/unet_best.pth into backend/models/
