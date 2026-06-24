@@ -3,6 +3,7 @@ import { useTheme } from "../ThemeContext";
 
 const LINKS = [
   { href: "#how-it-works", label: "How it Works" },
+  { href: "#features",     label: "Features" },
   { href: "#about",        label: "About" },
   { href: "#faq",          label: "FAQ" },
   { href: "#privacy",      label: "Privacy" },
@@ -55,7 +56,19 @@ export default function Navbar() {
     <header className="navbar">
       <div className="navbar__inner">
         <a href="#top" className="navbar__brand" onClick={close}>
-          <span className="navbar__logo-dot" />
+          <svg className="navbar__logo-icon" width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="32" cy="32" r="30" fill="rgba(0,212,255,0.08)" stroke="rgba(0,212,255,0.25)" strokeWidth="1"/>
+            <path d="M32 13C26 13 20 17 18 23C16 27 16 29 17 32C15 34 14 37 16 40C17 43 20 45 23 45C24 47 26 49 29 49C30 49 31 49 32 49L32 13Z" fill="none" stroke="var(--accent-teal)" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M32 13C38 13 44 17 46 23C48 27 48 29 47 32C49 34 50 37 48 40C47 43 44 45 41 45C40 47 38 49 35 49C34 49 33 49 32 49L32 13Z" fill="none" stroke="var(--accent-teal)" strokeWidth="1.4" strokeLinejoin="round"/>
+            <line x1="32" y1="13" x2="32" y2="49" stroke="var(--accent-teal)" strokeWidth="0.7" strokeDasharray="2 2" opacity="0.5"/>
+            <path d="M24 21Q21 25 23 29" stroke="var(--accent-teal)" strokeWidth="1" strokeLinecap="round" opacity="0.8"/>
+            <path d="M20 30Q19 34 22 37" stroke="var(--accent-teal)" strokeWidth="1" strokeLinecap="round" opacity="0.8"/>
+            <path d="M40 21Q43 25 41 29" stroke="var(--accent-teal)" strokeWidth="1" strokeLinecap="round" opacity="0.8"/>
+            <path d="M44 30Q45 34 42 37" stroke="var(--accent-teal)" strokeWidth="1" strokeLinecap="round" opacity="0.8"/>
+            <line x1="13" y1="31" x2="51" y2="31" stroke="var(--accent-teal)" strokeWidth="1.2" opacity="0.9"/>
+            <circle cx="32" cy="31" r="3" fill="#ff4d6d" opacity="0.9"/>
+            <circle cx="32" cy="31" r="5.5" fill="none" stroke="#ff4d6d" strokeWidth="0.8" opacity="0.4"/>
+          </svg>
           NeuroScan
         </a>
         <nav className="navbar__links navbar__links--desktop" aria-label="Primary">
@@ -63,7 +76,7 @@ export default function Navbar() {
         </nav>
         <div className="navbar__actions navbar__actions--desktop">
           <ThemeToggle />
-          <a href="#tool" className="navbar__cta">Try the Tool</a>
+          <a href="#tool" className="navbar__cta">Run Analysis</a>
         </div>
         <button
           className="navbar__burger"
@@ -76,9 +89,9 @@ export default function Navbar() {
       </div>
 
       {menuOpen && (
-        <div className="navbar__mobile-menu">
+        <div className="navbar__mobile-menu navbar__mobile-menu--open">
           {LINKS.map((l) => <a key={l.href} href={l.href} onClick={close}>{l.label}</a>)}
-          <a href="#tool" className="navbar__cta navbar__cta--mobile" onClick={close}>Try the Tool</a>
+          <a href="#tool" className="navbar__cta navbar__cta--mobile" onClick={close}>Run Analysis</a>
           <div className="navbar__mobile-theme">
             <span>Theme</span>
             <ThemeToggle />
@@ -93,7 +106,7 @@ export default function Navbar() {
           border-bottom: 1px solid var(--border-subtle);
         }
         .navbar__inner {
-          max-width: 1100px; margin: 0 auto; height: var(--nav-height);
+          max-width: 1400px; margin: 0 auto; height: var(--nav-height);
           padding: 0 var(--space-5); display: flex; align-items: center;
           justify-content: space-between; gap: var(--space-5);
         }
@@ -102,9 +115,9 @@ export default function Navbar() {
           font-family: var(--font-display); font-weight: 600; font-size: 18px;
           color: var(--text-primary); flex-shrink: 0;
         }
-        .navbar__logo-dot {
-          width: 9px; height: 9px; border-radius: 50%; background: var(--accent-teal);
-          box-shadow: 0 0 10px rgba(var(--accent-teal-rgb), 0.7);
+        .navbar__logo-icon {
+          flex-shrink: 0;
+          filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.4));
         }
         .navbar__links--desktop { display: flex; gap: var(--space-6); flex: 1; justify-content: center; }
         .navbar__links--desktop a { font-size: 14px; color: var(--text-secondary); transition: color 0.15s; }
@@ -126,6 +139,9 @@ export default function Navbar() {
           display: flex; flex-direction: column; gap: var(--space-1);
           padding: var(--space-3) var(--space-5) var(--space-5);
           border-top: 1px solid var(--border-subtle);
+        }
+        .navbar__mobile-menu--open {
+          animation: fadeInUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         .navbar__mobile-menu a {
           padding: var(--space-3) 0; font-size: 15px;

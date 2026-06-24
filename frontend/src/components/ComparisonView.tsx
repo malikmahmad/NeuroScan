@@ -23,44 +23,52 @@ export default function ComparisonView({ result }: Props) {
   const allAgree    = predictions.every((p) => p === predictions[0]);
 
   return (
-    <div className="comparison-view">
-      <div className="comparison-view__header">
-        <h3>Architecture comparison</h3>
-        <span className={`agreement-tag ${allAgree ? "agreement-tag--yes" : "agreement-tag--no"}`}>
-          {allAgree ? "Models agree" : "Models disagree"}
+    <div className="cv">
+      <div className="cv__header">
+        <h3 className="cv__title">Architecture comparison</h3>
+        <span className={`cv__tag ${allAgree ? "cv__tag--yes" : "cv__tag--no"}`}>
+          {allAgree ? "All models agree" : "Models disagree"}
         </span>
       </div>
 
-      <div className="comparison-view__scroll">
-        <table>
+      <div className="cv__scroll">
+        <table className="cv__table">
+          <caption className="cv__caption">
+            Per-model classification results with averaged ensemble
+          </caption>
           <thead>
             <tr>
-              <th>Model</th>
-              <th>Prediction</th>
-              <th>Confidence</th>
-              <th>Explainability</th>
+              <th scope="col">Model</th>
+              <th scope="col">Prediction</th>
+              <th scope="col">Confidence</th>
+              <th scope="col">Explainability</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map(([key, r]) => (
-              <tr
-                key={key}
-                className={r.predicted_class !== result.ensemble.predicted_class ? "comparison-view__dissent-row" : ""}
-              >
-                <td>{MODEL_LABELS[key] ?? key}</td>
-                <td>{CLASS_LABELS[r.predicted_class] ?? r.predicted_class}</td>
-                <td>
-                  <span className="confidence-cell">
-                    <span className="confidence-cell__track">
-                      <span className="confidence-cell__fill" style={{ width: `${r.confidence * 100}%` }} />
+            {rows.map(([key, r]) => {
+              const dissents = r.predicted_class !== result.ensemble.predicted_class;
+              return (
+                <tr key={key} className={dissents ? "cv__dissent" : ""}>
+                  <td className="cv__model-cell">{MODEL_LABELS[key] ?? key}</td>
+                  <td className={dissents ? "cv__pred-dissent" : "cv__pred"}>
+                    {CLASS_LABELS[r.predicted_class] ?? r.predicted_class}
+                  </td>
+                  <td>
+                    <span className="cv__conf">
+                      <span className="cv__conf-track">
+                        <span
+                          className="cv__conf-fill"
+                          style={{ width: `${r.confidence * 100}%` }}
+                        />
+                      </span>
+                      <span className="mono">{(r.confidence * 100).toFixed(1)}%</span>
                     </span>
-                    <span className="mono">{(r.confidence * 100).toFixed(1)}%</span>
-                  </span>
-                </td>
-                <td className="comparison-view__method">{r.explainability_method}</td>
-              </tr>
-            ))}
-            <tr className="comparison-view__ensemble-row">
+                  </td>
+                  <td className="cv__method">{r.explainability_method}</td>
+                </tr>
+              );
+            })}
+            <tr className="cv__ensemble">
               <td>Ensemble (averaged)</td>
               <td>{CLASS_LABELS[result.ensemble.predicted_class] ?? result.ensemble.predicted_class}</td>
               <td className="mono">{(result.ensemble.confidence * 100).toFixed(1)}%</td>
@@ -71,13 +79,13 @@ export default function ComparisonView({ result }: Props) {
       </div>
 
       <style>{`
-        .comparison-view {
+        .cv {
           background: var(--bg-panel);
           border: 1px solid var(--border-subtle);
           border-radius: var(--radius-lg);
           padding: var(--space-5);
         }
-        .comparison-view__header {
+        .cv__header {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -85,13 +93,29 @@ export default function ComparisonView({ result }: Props) {
           margin-bottom: var(--space-4);
           flex-wrap: wrap;
         }
-        .comparison-view h3 { font-size: 15px; color: var(--text-primary); }
-        .agreement-tag { font-size: 11.5px; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
-        .agreement-tag--yes { background: var(--accent-teal-bg); color: var(--accent-teal); }
-        .agreement-tag--no  { background: var(--accent-amber-bg); color: var(--accent-amber); }
-        .comparison-view__scroll { overflow-x: auto; margin: 0 calc(-1 * var(--space-2)); }
-        table { width: 100%; min-width: 460px; border-collapse: collapse; font-size: 13px; }
-        th {
+        .cv__title { font-size: 15px; color: var(--text-primary); }
+        .cv__tag {
+          font-size: 11.5px;
+          padding: 3px 10px;
+          border-radius: 999px;
+          white-space: nowrap;
+        }
+        .cv__tag--yes { background: var(--accent-teal-bg); color: var(--accent-teal); }
+        .cv__tag--no  { background: var(--accent-amber-bg); color: var(--accent-amber); }
+        .cv__scroll { overflow-x: auto; }
+        .cv__caption {
+          caption-side: top;
+          font-size: 0;
+          height: 0;
+          overflow: hidden;
+        }
+        .cv__table {
+          width: 100%;
+          min-width: 460px;
+          border-collapse: collapse;
+          font-size: 13px;
+        }
+        .cv__table th {
           text-align: left;
           color: var(--text-tertiary);
           font-weight: 500;
@@ -102,17 +126,23 @@ export default function ComparisonView({ result }: Props) {
           border-bottom: 1px solid var(--border-subtle);
           white-space: nowrap;
         }
-        td {
+        .cv__table td {
           padding: var(--space-3);
           border-bottom: 1px solid var(--border-subtle);
           color: var(--text-secondary);
           white-space: nowrap;
         }
-        td:first-child { color: var(--text-primary); font-weight: 500; }
-        tr:last-child td { border-bottom: none; }
-        .comparison-view__dissent-row td:nth-child(2) { color: var(--accent-amber); }
-        .confidence-cell { display: flex; align-items: center; gap: var(--space-2); }
-        .confidence-cell__track {
+        .cv__table tbody tr:last-child td { border-bottom: none; }
+        .cv__model-cell  { color: var(--text-primary); font-weight: 500; }
+        .cv__pred        { color: var(--text-secondary); }
+        .cv__pred-dissent { color: var(--accent-amber); }
+        .cv__method { color: var(--text-tertiary); font-size: 12px; }
+        .cv__conf {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+        }
+        .cv__conf-track {
           width: 56px;
           height: 4px;
           background: var(--bg-canvas);
@@ -120,15 +150,20 @@ export default function ComparisonView({ result }: Props) {
           overflow: hidden;
           flex-shrink: 0;
         }
-        .confidence-cell__fill { display: block; height: 100%; background: var(--accent-blue); border-radius: 2px; }
-        .comparison-view__method { color: var(--text-tertiary); font-size: 12px; }
-        .comparison-view__ensemble-row td {
+        .cv__conf-fill {
+          display: block;
+          height: 100%;
+          background: var(--accent-blue);
+          border-radius: 2px;
+          transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .cv__ensemble td {
           color: var(--accent-teal);
           font-weight: 500;
           background: var(--accent-teal-bg);
         }
-        .comparison-view__ensemble-row td:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
-        .comparison-view__ensemble-row td:last-child  { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+        .cv__ensemble td:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+        .cv__ensemble td:last-child  { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
       `}</style>
     </div>
   );

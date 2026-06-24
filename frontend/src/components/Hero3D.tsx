@@ -1,13 +1,16 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { useTheme } from "../ThemeContext";
 
 export default function Hero3D() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    const isDark = document.documentElement.getAttribute("data-theme") !== "light";
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const width  = container.clientWidth;
     const height = container.clientHeight;
@@ -24,6 +27,14 @@ export default function Hero3D() {
     const group = new THREE.Group();
     scene.add(group);
 
+    // Theme-aware colors
+    const nodeColor = isDark ? 0x00d4ff : 0x0088bb;
+    const lineColor = isDark ? 0x00d4ff : 0x006699;
+    const wireColor = isDark ? 0x4facfe : 0x0077cc;
+    const nodeOpacity = isDark ? 0.85 : 1.0;
+    const lineOpacity = isDark ? 0.18 : 0.35;
+    const wireOpacity = isDark ? 0.05 : 0.20;
+
     // Fibonacci sphere node distribution
     const NODE_COUNT   = 80;
     const radius       = 3.4;
@@ -38,7 +49,7 @@ export default function Hero3D() {
     }
 
     const pointsGeo = new THREE.BufferGeometry().setFromPoints(positions);
-    const pointsMat = new THREE.PointsMaterial({ color: 0x3ddc97, size: 0.09, sizeAttenuation: true, transparent: true, opacity: 0.9 });
+    const pointsMat = new THREE.PointsMaterial({ color: nodeColor, size: isDark ? 0.09 : 0.12, sizeAttenuation: true, transparent: true, opacity: nodeOpacity });
     group.add(new THREE.Points(pointsGeo, pointsMat));
 
     const linePos: number[] = [];
@@ -52,10 +63,10 @@ export default function Hero3D() {
     }
     const lineGeo = new THREE.BufferGeometry();
     lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(linePos, 3));
-    group.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0x3ddc97, transparent: true, opacity: 0.12 })));
+    group.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: lineColor, transparent: true, opacity: lineOpacity })));
 
     const wireGeo = new THREE.IcosahedronGeometry(radius + 0.55, 1);
-    group.add(new THREE.Mesh(wireGeo, new THREE.MeshBasicMaterial({ color: 0x5b9fe3, wireframe: true, transparent: true, opacity: 0.06 })));
+    group.add(new THREE.Mesh(wireGeo, new THREE.MeshBasicMaterial({ color: wireColor, wireframe: true, transparent: true, opacity: wireOpacity })));
 
     let mouseX = 0;
     let mouseY = 0;
@@ -98,9 +109,11 @@ export default function Hero3D() {
       pointsGeo.dispose(); pointsMat.dispose();
       lineGeo.dispose(); wireGeo.dispose();
       renderer.dispose();
-      container.removeChild(renderer.domElement);
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
     };
-  }, []);
+  }, [theme]); // re-init when theme changes
 
   return <div ref={containerRef} className="hero-3d" aria-hidden="true" />;
 }

@@ -127,7 +127,7 @@ export default function UploadZone({ onFileSelected, disabled }: Props) {
           margin-top: var(--space-2);
           font-size: 12px;
           color: var(--accent-teal);
-          border: 1px solid rgba(61, 220, 151, 0.3);
+          border: 1px solid rgba(0, 212, 255, 0.25);
           padding: 4px 12px;
           border-radius: 999px;
         }
@@ -140,9 +140,9 @@ export default function UploadZone({ onFileSelected, disabled }: Props) {
           background: linear-gradient(
             90deg,
             transparent,
-            rgba(61, 220, 151, 0.08) 40%,
-            rgba(61, 220, 151, 0.16) 50%,
-            rgba(61, 220, 151, 0.08) 60%,
+            rgba(0, 212, 255, 0.06) 40%,
+            rgba(0, 212, 255, 0.12) 50%,
+            rgba(0, 212, 255, 0.06) 60%,
             transparent
           );
           animation: sweep 5s ease-in-out infinite;

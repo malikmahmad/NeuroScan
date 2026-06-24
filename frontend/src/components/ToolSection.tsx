@@ -129,7 +129,7 @@ export default function ToolSection() {
       </div>
 
       <style>{`
-        .tool { max-width: 1100px; margin: 0 auto; padding: var(--space-8) var(--space-5); }
+        .tool { max-width: 1400px; margin: 0 auto; padding: var(--space-8) var(--space-5); }
         .tool__header { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-5); }
         .tool__header h2 { font-size: 26px; margin-top: var(--space-3); color: var(--text-primary); }
         .tool__live-badge { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-tertiary); border: 1px solid var(--border-subtle); padding: 5px 10px; border-radius: 999px; white-space: nowrap; }

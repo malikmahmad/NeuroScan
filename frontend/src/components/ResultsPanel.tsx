@@ -45,11 +45,11 @@ function downloadReport(
   const contentW  = W - margin * 2;
   let y           = 20;
 
-  const teal  = "#0d9e6e";
-  const amber = "#c47a1a";
-  const dark  = "#1a1a2e";
+  const teal  = "#00aac8";
+  const amber = "#d48000";
+  const dark  = "#0d1117";
   const grey  = "#6b7280";
-  const light = "#f3f4f6";
+  const light = "#f0f4f8";
 
   doc.setFillColor(teal);
   doc.rect(0, 0, W, 14, "F");
@@ -114,9 +114,9 @@ function downloadReport(
 
     const fillW = Math.max(prob * barW, 1);
     doc.setFillColor(
-      isTop ? (isTumor ? 196 : 13)  : 91,
-      isTop ? (isTumor ? 122 : 158) : 159,
-      isTop ? (isTumor ? 26  : 110) : 227
+      isTop ? (isTumor ? 210 : 0)   : 79,
+      isTop ? (isTumor ? 130 : 172) : 172,
+      isTop ? (isTumor ? 0   : 200) : 254
     );
     doc.roundedRect(margin + 42, y, fillW, 5, 1, 1, "F");
 

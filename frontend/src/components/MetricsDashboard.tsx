@@ -65,13 +65,13 @@ export default function MetricsDashboard() {
       </button>
 
       {open && (
-        <div className="metrics-panel">
+        <div className="metrics-panel metrics-panel--open">
           {loading && <p className="metrics-empty">Loading metrics…</p>}
 
           {!loading && !hasClassData && !hasSegData && (
             <p className="metrics-empty">
-              No training metrics found. Run the classification and segmentation notebooks on Kaggle,
-              then copy the <code>outputs/</code> folders into <code>notebooks/</code>.
+              No training metrics available. Download the <code>outputs/</code> folders from your
+              Kaggle notebooks and place them in <code>notebooks/</code>.
             </p>
           )}
 
@@ -232,6 +232,9 @@ export default function MetricsDashboard() {
           flex-direction: column;
           gap: var(--space-6);
         }
+        .metrics-panel--open {
+          animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
         .metrics-empty {
           color: var(--text-tertiary);
           font-size: 13px;
@@ -352,7 +355,7 @@ export default function MetricsDashboard() {
           gap: var(--space-2);
         }
         .seg-metric-card--note {
-          border-color: rgba(61, 220, 151, 0.2);
+          border-color: rgba(0, 212, 255, 0.2);
           background: var(--accent-teal-bg);
         }
         .seg-metric-label {

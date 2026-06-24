@@ -2,6 +2,7 @@ import { ThemeProvider } from "./ThemeContext";
 import Navbar        from "./components/Navbar";
 import Hero          from "./components/Hero";
 import HowItWorks    from "./components/HowItWorks";
+import Features      from "./components/Features";
 import ToolSection   from "./components/ToolSection";
 import About         from "./components/About";
 import FAQ           from "./components/FAQ";
@@ -15,6 +16,7 @@ export default function App() {
       <Navbar />
       <Hero />
       <HowItWorks />
+      <Features />
       <ToolSection />
       <About />
       <FAQ />

@@ -100,12 +100,12 @@ export default function ModelStatusBar({ status, loading }: Props) {
           background: var(--bg-panel-raised);
           transition: border-color 0.2s;
         }
-        .status-pill--ready { border-color: rgba(61, 220, 151, 0.25); }
+        .status-pill--ready { border-color: rgba(0, 212, 255, 0.25); }
         .status-pill__icon { display: flex; color: var(--text-tertiary); }
         .status-pill--ready .status-pill__icon { color: var(--accent-teal); }
         .status-pill__label { font-size: 12.5px; color: var(--text-secondary); white-space: nowrap; }
         .status-pill__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-strong); margin-left: 2px; }
-        .status-pill--ready .status-pill__dot { background: var(--accent-teal); box-shadow: 0 0 6px rgba(61, 220, 151, 0.6); }
+        .status-pill--ready .status-pill__dot { background: var(--accent-teal); box-shadow: 0 0 6px rgba(0, 212, 255, 0.55); }
         .status-pill--loading .status-pill__dot { background: var(--text-tertiary); animation: spin 1s linear infinite; }
         @media (max-width: 600px) {
           .status-bar { flex-direction: column; align-items: flex-start; gap: var(--space-3); }

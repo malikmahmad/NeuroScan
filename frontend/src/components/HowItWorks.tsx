@@ -1,3 +1,5 @@
+import { useInView } from "../hooks/useInView";
+
 const STEPS = [
   {
     n: "01", title: "Upload a scan",
@@ -22,15 +24,23 @@ const STEPS = [
 ];
 
 export default function HowItWorks() {
+  const { ref: headerRef, inView: headerVisible } = useInView<HTMLDivElement>();
+  const { ref: gridRef,   inView: gridVisible   } = useInView<HTMLDivElement>({ threshold: 0.1 });
+
   return (
     <section id="how-it-works" className="how">
-      <div className="how__header">
+      <div ref={headerRef} className={`how__header reveal ${headerVisible ? "is-visible" : ""}`}>
         <span className="section-eyebrow">How it Works</span>
         <h2>From upload to explained result, in four steps</h2>
       </div>
-      <div className="how__grid">
-        {STEPS.map((s) => (
-          <div className="how__card" key={s.n}>
+
+      <div ref={gridRef} className="how__grid">
+        {STEPS.map((s, i) => (
+          <div
+            key={s.n}
+            className={`how__card reveal ${gridVisible ? "is-visible" : ""}`}
+            style={{ transitionDelay: gridVisible ? `${i * 0.08}s` : "0s" }}
+          >
             <span className="how__num">{s.n}</span>
             <div className="how__icon">{s.icon}</div>
             <h3>{s.title}</h3>
@@ -38,21 +48,44 @@ export default function HowItWorks() {
           </div>
         ))}
       </div>
+
       <style>{`
-        .how { max-width: 1100px; margin: 0 auto; padding: var(--space-8) var(--space-5); }
-        .how__header { text-align: center; max-width: 560px; margin: 0 auto var(--space-7); }
+        .how { max-width: 1400px; margin: 0 auto; padding: var(--space-8) var(--space-5); }
+        .how__header { text-align: center; max-width: 680px; margin: 0 auto var(--space-7); }
         .how__header h2 { font-size: 26px; margin-top: var(--space-3); color: var(--text-primary); }
         .how__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
         .how__card {
           background: var(--bg-panel); border: 1px solid var(--border-subtle);
           border-radius: var(--radius-lg); padding: var(--space-5); position: relative;
-          transition: border-color 0.2s, transform 0.2s;
+          transition:
+            border-color 0.25s, transform 0.35s cubic-bezier(0.16,1,0.3,1),
+            box-shadow 0.25s,
+            opacity 0.6s cubic-bezier(0.16,1,0.3,1),
+            translate 0.6s cubic-bezier(0.16,1,0.3,1);
+          cursor: default;
         }
-        .how__card:hover { border-color: rgba(var(--accent-teal-rgb), 0.35); transform: translateY(-3px); }
-        .how__num { position: absolute; top: var(--space-4); right: var(--space-4); font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary); }
-        .how__icon { width: 42px; height: 42px; border-radius: var(--radius-md); background: var(--accent-teal-bg); color: var(--accent-teal); display: flex; align-items: center; justify-content: center; margin-bottom: var(--space-4); }
+        .how__card:hover {
+          border-color: rgba(var(--accent-teal-rgb), 0.45);
+          transform: translateY(-6px) !important;
+          box-shadow: 0 16px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(var(--accent-teal-rgb),0.1);
+        }
+        .how__card:hover .how__icon {
+          background: rgba(var(--accent-teal-rgb), 0.18);
+          transform: scale(1.1) rotate(-4deg);
+        }
+        .how__num {
+          position: absolute; top: var(--space-4); right: var(--space-4);
+          font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary);
+        }
+        .how__icon {
+          width: 42px; height: 42px; border-radius: var(--radius-md);
+          background: var(--accent-teal-bg); color: var(--accent-teal);
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: var(--space-4);
+          transition: background 0.25s, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
         .how__card h3 { font-size: 15.5px; color: var(--text-primary); margin-bottom: var(--space-2); }
-        .how__card p { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin: 0; }
+        .how__card p  { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin: 0; }
         @media (max-width: 900px) { .how__grid { grid-template-columns: 1fr 1fr; } }
         @media (max-width: 540px) { .how__grid { grid-template-columns: 1fr; } .how__header h2 { font-size: 22px; } }
       `}</style>
