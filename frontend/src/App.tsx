@@ -7,6 +7,7 @@ import About         from "./components/About";
 import FAQ           from "./components/FAQ";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import Footer        from "./components/Footer";
+import ScrollToTop   from "./components/ScrollToTop";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
       <FAQ />
       <PrivacyPolicy />
       <Footer />
+      <ScrollToTop />
     </ThemeProvider>
   );
 }
