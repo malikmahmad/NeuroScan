@@ -64,6 +64,8 @@ export default function App() {
     } catch (e) {
       if (e instanceof ApiError && e.status === 503) {
         setError(`That model isn't trained yet: ${e.message}`);
+      } else if (e instanceof ApiError && e.status === 422) {
+        setError(e.message);
       } else {
         setError(e instanceof Error ? e.message : "Something went wrong during analysis.");
       }

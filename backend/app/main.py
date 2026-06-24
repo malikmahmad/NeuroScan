@@ -3,6 +3,7 @@ import json
 import logging
 from pathlib import Path
 
+import numpy as np
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -51,9 +52,26 @@ def _read_image(upload: UploadFile) -> Image.Image:
     if not upload.content_type or not upload.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Expected an image file (PNG, JPEG, or TIFF).")
     try:
-        return Image.open(io.BytesIO(upload.file.read()))
+        data = upload.file.read()
+        img  = Image.open(io.BytesIO(data))
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Could not open image: {exc}")
+
+    # Basic MRI plausibility check:
+    # Real MRI slices are grayscale or near-grayscale. A color photo / ID card
+    # will have high channel variance. We reject images where the mean absolute
+    # difference between R, G, B channels is too large.
+    rgb = img.convert("RGB")
+    arr = np.array(rgb, dtype=np.float32)
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    channel_diff = (np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()) / 3.0
+    if channel_diff > 18.0:
+        raise HTTPException(
+            status_code=422,
+            detail="This does not look like an MRI scan. Please upload a grayscale brain MRI slice (axial T1/T2/FLAIR).",
+        )
+
+    return img
 
 
 def _load_json(path: Path):
