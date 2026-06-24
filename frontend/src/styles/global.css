@@ -1,13 +1,3 @@
-/*
-  Design direction: dark, precise, clinical.
-  The kind of surface a radiology viewer uses — where the scan itself
-  is the focus, not the interface around it.
-
-  Teal = normal / clear reading (like a vital-sign monitor in range)
-  Amber = alert / tumor detected
-  Everything else stays neutral so it doesn't compete with the images.
-*/
-
 :root {
   --bg-canvas: #0a0e13;
   --bg-panel: #11161d;
@@ -56,7 +46,12 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg-canvas);
+  background-color: var(--bg-canvas);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(61, 220, 151, 0.07), transparent),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: auto, 32px 32px, 32px 32px;
   color: var(--text-primary);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -87,6 +82,34 @@ button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--accent-teal);
   outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-teal-bg);
+  color: var(--accent-teal);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(231, 237, 243, 0.15);
+  border-top-color: var(--accent-teal);
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.35s ease both;
 }
 
 @media (prefers-reduced-motion: reduce) {
