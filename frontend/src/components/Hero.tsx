@@ -5,7 +5,7 @@ const Hero3D = lazy(() => import("./Hero3D"));
 
 export default function Hero() {
   const { ref: textRef, inView: textVisible } = useInView<HTMLDivElement>({ threshold: 0.1 });
-  const { ref: canvasRef, inView: canvasVisible } = useInView<HTMLDivElement>({ threshold: 0.1 });
+  const { ref: visualRef, inView: visualVisible } = useInView<HTMLDivElement>({ threshold: 0.1 });
 
   return (
     <section id="top" className="hero">
@@ -31,8 +31,8 @@ export default function Hero() {
       </div>
 
       <div
-        ref={canvasRef}
-        className={`reveal-right ${canvasVisible ? "is-visible" : ""}`}
+        ref={visualRef}
+        className={`reveal-right ${visualVisible ? "is-visible" : ""}`}
         style={{ transitionDelay: "0.15s" }}
       >
         <Suspense fallback={<div className="hero-3d hero-3d--loading" />}>
@@ -43,7 +43,7 @@ export default function Hero() {
       <style>{`
         .hero {
           max-width: 1400px; margin: 0 auto;
-          padding: var(--space-9) var(--space-5) var(--space-7);
+          padding: var(--space-6) var(--space-5) var(--space-7);
           display: grid; grid-template-columns: 1.1fr 0.9fr;
           align-items: center; gap: var(--space-6);
         }
@@ -98,12 +98,12 @@ export default function Hero() {
           transform: translateY(-3px) scale(1.02);
           box-shadow: 0 6px 20px rgba(var(--accent-teal-rgb), 0.2);
         }
-        .hero-3d { width: 100%; height: 360px; }
+        .hero-3d { width: 100%; height: 460px; }
         .hero-3d--loading { border-radius: var(--radius-lg); background: radial-gradient(circle, var(--accent-teal-bg), transparent 70%); }
         @media (max-width: 860px) {
           .hero { grid-template-columns: 1fr; padding-top: var(--space-7); }
           .hero h1 { font-size: 30px; }
-          .hero-3d { height: 280px; order: -1; }
+          .hero-3d { height: 320px; order: -1; }
           .hero__subhead { max-width: 100%; }
         }
         @media (max-width: 420px) {

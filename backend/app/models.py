@@ -22,8 +22,7 @@ def build_custom_cnn(num_classes: int = NUM_CLASSES) -> nn.Module:
 
 
 def build_efficientnet(num_classes: int = NUM_CLASSES) -> nn.Module:
-    """EfficientNet-B0 with a replaced classifier head. Weights come from our
-    checkpoint at inference time, not from ImageNet."""
+    """EfficientNet-B0 with the classifier head replaced. No pretrained weights loaded here."""
     model = models.efficientnet_b0(weights=None)
     in_features = model.classifier[1].in_features
     model.classifier = nn.Sequential(
@@ -42,7 +41,7 @@ def build_vit(num_classes: int = NUM_CLASSES) -> nn.Module:
 
 
 class DoubleConv(nn.Module):
-    """Two back-to-back conv-BN-ReLU blocks, the basic building block of U-Net."""
+    """Conv-BN-ReLU × 2. Reused at every encoder and decoder stage."""
 
     def __init__(self, in_ch: int, out_ch: int):
         super().__init__()
@@ -61,11 +60,8 @@ class DoubleConv(nn.Module):
 
 class UNet(nn.Module):
     """
-    U-Net for binary tumor segmentation (Ronneberger et al., 2015).
-
-    Encoder path downsamples with MaxPool, decoder path upsamples with
-    transposed convolutions. Skip connections preserve spatial detail.
-    Output is raw logits — apply sigmoid externally.
+    Standard U-Net for binary tumor segmentation (Ronneberger et al., 2015).
+    Output is raw logits — caller applies sigmoid.
     """
 
     def __init__(self, in_channels: int = 3, out_channels: int = 1, base: int = 32):

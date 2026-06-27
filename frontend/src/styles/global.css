@@ -130,7 +130,7 @@ section[id] { scroll-margin-top: calc(var(--nav-height) + 16px); }
   flex-shrink: 0;
 }
 
-/* ── Scroll-triggered reveal animations ── */
+/* keyframes */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -181,7 +181,6 @@ section[id] { scroll-margin-top: calc(var(--nav-height) + 16px); }
   100% { background-position: 0% 50%; }
 }
 
-/* Reveal utility classes */
 .reveal {
   opacity: 0;
   transform: translateY(24px);

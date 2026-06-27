@@ -28,7 +28,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Look for training outputs in two places: notebooks/outputs/ or outputs/ at project root
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 CLASSIFICATION_METRICS_DIR = next(
@@ -57,10 +56,8 @@ def _read_image(upload: UploadFile) -> Image.Image:
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Could not open image: {exc}")
 
-    # Basic MRI plausibility check:
-    # Real MRI slices are grayscale or near-grayscale. A color photo / ID card
-    # will have high channel variance. We reject images where the mean absolute
-    # difference between R, G, B channels is too large.
+    # Basic MRI plausibility: real scans are near-grayscale. High channel variance
+    # (>18.0 mean absolute diff) suggests a color photo — reject it.
     rgb = img.convert("RGB")
     arr = np.array(rgb, dtype=np.float32)
     r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
@@ -74,7 +71,7 @@ def _read_image(upload: UploadFile) -> Image.Image:
     return img
 
 
-def _load_json(path: Path):
+def _load_json(path: Path) -> dict | None:
     if not path or not path.exists():
         return None
     with open(path) as f:

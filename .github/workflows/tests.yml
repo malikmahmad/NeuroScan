@@ -1,0 +1,42 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install fastapi uvicorn Pillow numpy python-multipart matplotlib
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install pytest pytest-cov
+
+      - name: Run tests
+        run: |
+          set +e
+          pytest backend/ --tb=short --cov=backend/app --cov-report=term-missing
+          code=$?
+          if [ $code -eq 5 ]; then
+            echo "No tests collected yet — see CONTRIBUTING.md item #1, this is a known gap, not a CI failure."
+            exit 0
+          fi
+          exit $code
+        env:
+          # Model-dependent tests should use pytest.mark.skipif or mock
+          # ModelRegistry rather than require real .pth files in CI —
+          # the checkpoints aren't committed to the repo.
+          NEUROSCAN_CI: "1"

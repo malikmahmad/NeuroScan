@@ -46,11 +46,11 @@ export default function ComparisonView({ result }: Props) {
           </thead>
           <tbody>
             {rows.map(([key, r]) => {
-              const dissents = r.predicted_class !== result.ensemble.predicted_class;
+              const isDisagreement = r.predicted_class !== result.ensemble.predicted_class;
               return (
-                <tr key={key} className={dissents ? "cv__dissent" : ""}>
+                <tr key={key} className={isDisagreement ? "cv__dissent" : ""}>
                   <td className="cv__model-cell">{MODEL_LABELS[key] ?? key}</td>
-                  <td className={dissents ? "cv__pred-dissent" : "cv__pred"}>
+                  <td className={isDisagreement ? "cv__pred-dissent" : "cv__pred"}>
                     {CLASS_LABELS[r.predicted_class] ?? r.predicted_class}
                   </td>
                   <td>

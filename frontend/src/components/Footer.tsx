@@ -65,7 +65,7 @@ export default function Footer() {
         <div className="site-footer__author">
           <span className="site-footer__col-title">Built by</span>
           <span className="site-footer__name">Malik Muhammad Ahmad</span>
-          <p className="site-footer__role">Full-Stack Developer &amp; AI/ML Engineer</p>
+          <p className="site-footer__role">Full-Stack Developer &amp; AI/ML Enthusiast</p>
           <div className="site-footer__socials">
             {SOCIALS.map((s) => (
               <a key={s.name} href={s.href} target="_blank" rel="noopener noreferrer"

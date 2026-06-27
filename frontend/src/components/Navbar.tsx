@@ -127,9 +127,15 @@ export default function Navbar() {
           background: var(--accent-teal); color: var(--bg-canvas);
           font-size: 13.5px; font-weight: 600; padding: 9px 18px;
           border-radius: 999px; white-space: nowrap;
-          transition: filter 0.15s, transform 0.15s;
+          transition: filter 0.15s, transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+          box-shadow: 0 2px 12px rgba(var(--accent-teal-rgb), 0.3);
         }
-        .navbar__cta:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .navbar__cta:hover {
+          filter: brightness(1.1);
+          transform: translateY(-2px) scale(1.03);
+          box-shadow: 0 6px 20px rgba(var(--accent-teal-rgb), 0.45);
+        }
+        .navbar__cta:active { transform: translateY(0) scale(0.98); }
         .navbar__burger {
           display: none; flex-direction: column; justify-content: center;
           gap: 4px; width: 32px; height: 32px; background: transparent; border: none; flex-shrink: 0;

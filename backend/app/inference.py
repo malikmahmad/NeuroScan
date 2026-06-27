@@ -8,7 +8,7 @@ from PIL import Image
 from torchvision import transforms
 
 from .models import build_custom_cnn, build_efficientnet, build_vit, UNet, CLASS_NAMES
-from .gradcam import GradCAM, vit_attention_rollout, overlay_heatmap_b64
+from .gradcam import GradCAM, vit_attention_rollout, blend_cam_overlay
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
@@ -33,9 +33,7 @@ segment_transform = transforms.Compose([
 
 
 class WeightsNotFoundError(RuntimeError):
-    """Raised when a checkpoint file is missing from backend/models/.
-    The server never returns a fabricated prediction — if the weights
-    aren't there, the request fails with a clear message."""
+    """Raised when a .pth checkpoint is missing from backend/models/."""
 
 
 def _load_checkpoint(model: torch.nn.Module, filename: str) -> torch.nn.Module:
@@ -53,9 +51,9 @@ def _load_checkpoint(model: torch.nn.Module, filename: str) -> torch.nn.Module:
 
 class ModelRegistry:
     """
-    Loads each model on first use and keeps it in memory.
-    The status() method lets the frontend know which models are actually
-    ready, so it can disable buttons rather than show broken results.
+    Lazy-loads each model on first use and keeps it resident in memory.
+    status() lets the frontend know which checkpoints are present so it
+    can disable unavailable options rather than surface a runtime error.
     """
 
     def __init__(self):
@@ -107,8 +105,7 @@ def _pil_to_b64(image: Image.Image) -> str:
 
 
 def _cnn_target_layer(model):
-    # Index 14 is the ReLU after the last conv block, just before the final
-    # MaxPool. It gives the best spatial resolution for Grad-CAM.
+    # Index 14 = ReLU after the last conv block, just before AdaptiveAvgPool.
     return model[14]
 
 
@@ -157,7 +154,7 @@ def classify(image: Image.Image, model_name: str = "efficientnet", explain: bool
     }
 
     if explain and cam is not None:
-        result["explainability_overlay_png_base64"] = _pil_to_b64(overlay_heatmap_b64(image, cam))
+        result["explainability_overlay_png_base64"] = _pil_to_b64(blend_cam_overlay(image, cam))
 
     return result
 
@@ -203,7 +200,7 @@ def segment(image: Image.Image) -> dict:
     tumor_detected = tumor_pixel_ratio > 0.001
 
     mask_img = Image.fromarray(binary_mask * 255).resize(image.size, Image.NEAREST)
-    overlay  = overlay_heatmap_b64(image, prob_mask, alpha=0.4)
+    overlay  = blend_cam_overlay(image, prob_mask, alpha=0.4)
 
     return {
         "tumor_detected":   tumor_detected,

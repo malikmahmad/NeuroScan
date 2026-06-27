@@ -3,8 +3,16 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+*.egg-info/
 
-# Model weights (large, trained locally/on Kaggle — never commit blindly)
+# Type checking / linting caches
+.mypy_cache/
+
+# Test output
+.pytest_cache/
+htmlcov/
+
+# Model weights (large, trained locally/on Kaggle — not committed)
 backend/models/*.pth
 !backend/models/.gitkeep
 

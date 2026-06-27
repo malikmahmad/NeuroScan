@@ -75,7 +75,6 @@ export default function MetricsDashboard() {
             </p>
           )}
 
-          {/* ── Classification Table ─────────────────────────────── */}
           {hasClassData && (
             <section>
               <h4 className="metrics-section-title">Classification — Test Set Results</h4>
@@ -133,7 +132,6 @@ export default function MetricsDashboard() {
                 </table>
               </div>
 
-              {/* Per-class breakdown for best model */}
               {(() => {
                 const entries = Object.entries(classMetrics!.models!).filter(([, d]) => d.test);
                 if (!entries.length) return null;
@@ -163,7 +161,6 @@ export default function MetricsDashboard() {
             </section>
           )}
 
-          {/* ── Segmentation Results ─────────────────────────────── */}
           {hasSegData && (
             <section>
               <h4 className="metrics-section-title">Segmentation — U-Net Test Set Results</h4>

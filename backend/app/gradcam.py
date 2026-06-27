@@ -5,16 +5,7 @@ from PIL import Image
 
 
 class GradCAM:
-    """
-    Gradient-weighted Class Activation Mapping for convolutional networks.
-
-    Works by hooking into a chosen layer, running a forward pass, then
-    backpropagating the target class score to get gradient weights. Those
-    weights are averaged spatially and multiplied with the activations to
-    produce a coarse heatmap showing which regions influenced the prediction.
-
-    Valid for CNN and EfficientNet. Not valid for ViT — use attention_rollout instead.
-    """
+    """Grad-CAM for CNN/EfficientNet. Not valid for ViT — use vit_attention_rollout instead."""
 
     def __init__(self, model, target_layer):
         self.model = model
@@ -55,11 +46,9 @@ def vit_attention_rollout(model, input_tensor: torch.Tensor):
     """
     Attention Rollout for Vision Transformers (Abnar & Zuidema, 2020).
 
-    Grad-CAM requires a spatial convolutional feature map, which ViT doesn't
-    have. Attention Rollout instead multiplies attention matrices across all
-    encoder layers, propagating the influence of each token back to the input
-    patches. The CLS token's row in the final matrix tells us which patches
-    the model attended to most.
+    Multiplies attention matrices across all encoder layers, propagating token
+    influence back to input patches. The CLS token's row in the final matrix
+    indicates which patches the model attended to most.
     """
     handles = []
     captured = {}
@@ -88,14 +77,14 @@ def vit_attention_rollout(model, input_tensor: torch.Tensor):
     attn_mats = [captured[i][0] for i in range(n_layers)]
     tokens = attn_mats[0].shape[-1]
 
-    # Multiply attention matrices layer by layer, adding residual identity
+    # Add residual connection (identity) before normalising — Abnar & Zuidema §3
     rollout = torch.eye(tokens, device=input_tensor.device)
     for attn in attn_mats:
         attn = attn + torch.eye(tokens, device=input_tensor.device)
         attn = attn / attn.sum(dim=-1, keepdim=True)
         rollout = attn @ rollout
 
-    # CLS token attends to patches starting at index 1
+    # Row 0 is the CLS token; patch tokens start at index 1
     cls_attention = rollout[0, 1:]
     grid_size = int(cls_attention.shape[0] ** 0.5)
     cam = cls_attention.reshape(grid_size, grid_size).cpu().numpy()
@@ -106,7 +95,7 @@ def vit_attention_rollout(model, input_tensor: torch.Tensor):
     return cam, pred_idx, probs
 
 
-def overlay_heatmap_b64(pil_image: Image.Image, cam: np.ndarray, alpha: float = 0.45) -> Image.Image:
+def blend_cam_overlay(pil_image: Image.Image, cam: np.ndarray, alpha: float = 0.45) -> Image.Image:
     """Blend a CAM heatmap over the original image and return the composite."""
     import matplotlib.cm as cm
 

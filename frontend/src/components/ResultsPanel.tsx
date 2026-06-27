@@ -1,4 +1,4 @@
-import { jsPDF } from "jspdf";
+import { useState } from "react";
 import type { ClassifyResult, SegmentResult, SegmentNote } from "../api";
 
 interface Props {
@@ -31,11 +31,12 @@ const MODEL_LABELS: Record<string, string> = {
   vit:          "ViT-B/16",
 };
 
-function downloadReport(
+async function downloadReport(
   _originalImageUrl: string,
   result: ClassifyResult,
   segmentation?: SegmentResult | SegmentNote
 ) {
+  const { jsPDF } = await import("jspdf");
   const doc       = new jsPDF({ unit: "mm", format: "a4" });
   const seg       = isSegmentResult(segmentation) ? segmentation : null;
   const timestamp = new Date().toLocaleString();
@@ -182,6 +183,16 @@ export default function ResultsPanel({ originalImageUrl, result, segmentation }:
   const overlaySrc  = result.explainability_overlay_png_base64
     ? `data:image/png;base64,${result.explainability_overlay_png_base64}`
     : null;
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownload = async () => {
+    setPdfLoading(true);
+    try {
+      await downloadReport(originalImageUrl, result, segmentation);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   return (
     <div className="results-panel">
@@ -241,9 +252,10 @@ export default function ResultsPanel({ originalImageUrl, result, segmentation }:
 
         <button
           className="download-btn"
-          onClick={() => downloadReport(originalImageUrl, result, segmentation)}
+          onClick={handleDownload}
+          disabled={pdfLoading}
         >
-          ↓ Download PDF Report
+          {pdfLoading ? "Generating PDF…" : "↓ Download PDF Report"}
         </button>
       </div>
 
