@@ -97,12 +97,12 @@ def vit_attention_rollout(model, input_tensor: torch.Tensor):
 
 def blend_cam_overlay(pil_image: Image.Image, cam: np.ndarray, alpha: float = 0.45) -> Image.Image:
     """Blend a CAM heatmap over the original image and return the composite."""
-    import matplotlib.cm as cm
+    import matplotlib
 
     cam_img = Image.fromarray((cam * 255).astype(np.uint8)).resize(pil_image.size, Image.BILINEAR)
     cam_resized = np.array(cam_img) / 255.0
 
-    heatmap = cm.get_cmap("jet")(cam_resized)[:, :, :3]
+    heatmap = matplotlib.colormaps["jet"](cam_resized)[:, :, :3]
     base = np.array(pil_image.convert("RGB")) / 255.0
     overlay = (1 - alpha) * base + alpha * heatmap
 

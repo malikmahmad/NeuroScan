@@ -57,10 +57,13 @@ class ModelRegistry:
     """
 
     def __init__(self):
-        self._cnn = None
+        self._cnn          = None
         self._efficientnet = None
-        self._vit = None
-        self._unet = None
+        self._vit          = None
+        self._unet         = None
+        # GradCAM instances cached here so hooks are only registered once
+        self._cnn_gradcam  = None
+        self._eff_gradcam  = None
 
     def status(self) -> dict:
         return {
@@ -77,10 +80,22 @@ class ModelRegistry:
         return self._cnn
 
     @property
+    def cnn_gradcam(self) -> GradCAM:
+        if self._cnn_gradcam is None:
+            self._cnn_gradcam = GradCAM(self.cnn, _cnn_target_layer(self.cnn))
+        return self._cnn_gradcam
+
+    @property
     def efficientnet(self):
         if self._efficientnet is None:
             self._efficientnet = _load_checkpoint(build_efficientnet(), "efficientnet_best.pth")
         return self._efficientnet
+
+    @property
+    def efficientnet_gradcam(self) -> GradCAM:
+        if self._eff_gradcam is None:
+            self._eff_gradcam = GradCAM(self.efficientnet, self.efficientnet.features[-1])
+        return self._eff_gradcam
 
     @property
     def vit(self):
@@ -115,7 +130,7 @@ def classify(image: Image.Image, model_name: str = "efficientnet", explain: bool
     if model_name == "cnn":
         model = registry.cnn
         if explain:
-            cam, pred_idx, probs = GradCAM(model, _cnn_target_layer(model)).generate(input_tensor, IMAGE_SIZE)
+            cam, pred_idx, probs = registry.cnn_gradcam.generate(input_tensor, IMAGE_SIZE)
         else:
             with torch.no_grad():
                 out = model(input_tensor)
@@ -125,7 +140,7 @@ def classify(image: Image.Image, model_name: str = "efficientnet", explain: bool
     elif model_name == "efficientnet":
         model = registry.efficientnet
         if explain:
-            cam, pred_idx, probs = GradCAM(model, model.features[-1]).generate(input_tensor, IMAGE_SIZE)
+            cam, pred_idx, probs = registry.efficientnet_gradcam.generate(input_tensor, IMAGE_SIZE)
         else:
             with torch.no_grad():
                 out = model(input_tensor)
