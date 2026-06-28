@@ -79,20 +79,19 @@ These numbers come straight from `notebooks/outputs/metrics/*.json` and `noteboo
 
 ## Comparison with published work
 
-Selected results from the literature on the same Nickparvar Brain Tumor MRI Dataset (4-class, same train/test structure). Numbers are as reported in each paper — different papers use different split sizes, so direct comparison is approximate.
+A note on how to read this table: different papers use different train/test splits, augmentation strategies, and fine-tuning depth, so these numbers aren't a strictly controlled comparison the way the three models trained for this project are against each other. They're included to show roughly where this project's numbers sit relative to published results on the same underlying dataset family — not to claim a new state of the art.
 
 | Method | Reported Accuracy | Notes | Source |
 |---|---|---|---|
 | Custom CNN (this project) | 78.19% | Trained from scratch, no pretraining | — |
-| EfficientNet-B0 (this project) | 91.56% | ImageNet pretraining, 2 blocks + head fine-tuned | — |
-| **ViT-B/16 (this project)** | **94.69%** | **ImageNet pretraining, last block + head fine-tuned** | — |
-| Custom CNN (Nickparvar baseline) | ~78% | CNN baseline on same dataset | Nickparvar, 2021 |
-| EfficientNet-B0 (multi-class) | 95.0% | Full fine-tune, different split | arxiv:2606.18682 |
-| EfficientNetV2 + attention | 99.16% | Heavier augmentation, full fine-tune | PMID 39657446 |
-| EfficientNetV2 + channel attn | 99.76% | Custom attention heads | Springer, 2024 |
-| Hierarchical ViT (HMSA) | — | Novel multi-scale ViT, same 4 classes | Nature Sci Rep, 2025 |
+| EfficientNet-B0 (this project) | 91.56% | ImageNet pretraining, last 2 blocks + head fine-tuned | — |
+| **ViT-B/16 (this project)** | **94.69%** | **ImageNet pretraining, last encoder block + head fine-tuned** | — |
+| EfficientNetV2b0, fully fine-tuned | 99.16% | Same dataset family, full fine-tune rather than last-block-only | Hassan & Ghadiri, *Computers in Biology and Medicine*, vol. 185, art. 109542, 2025 |
+| EfficientNetV2 + GAM + ECA attention | 99.76% | Custom attention modules added to the backbone, full fine-tune | Pacal, *Cluster Computing*, vol. 27(8), pp. 11187–11212, 2024 |
 
-**What these numbers mean together:** The ViT-B/16 here (94.69%) is trained with a deliberately conservative fine-tuning strategy — only the last encoder block is unfrozen, so the comparison is fair between architectures given equal tuning effort. Fully fine-tuned EfficientNet and specialized ViT variants with more aggressive augmentation can push past 95–99%. The goal of this project is not to claim a new top result; it's to make the *comparison between architectures under identical conditions* reliable and reproducible.
+**What this means in context:** both published results above fully fine-tune their backbone and add custom architectural components on top of it. ViT-B/16 here deliberately only fine-tunes the last encoder block, to keep the comparison between the three architectures in this project fair given equal tuning effort — fully fine-tuning ViT-B/16, or adding attention modules the way Pacal (2024) does for EfficientNetV2, would likely close some of this gap. The point of this project isn't to claim a new top result on this dataset; it's to make the *comparison between architectures under identical, modest fine-tuning conditions* something you can actually trust.
+
+Earlier versions of this table cited two additional sources (`arxiv:2606.18682` and a "Nickparvar, 2021 baseline") — both have been removed. The arXiv ID could not be verified against any real paper, and the Nickparvar citation conflated the dataset's creator with a publication that doesn't appear to exist. Leaving inaccurate citations in to pad out a comparison table would be a worse look than having a shorter, fully-verified one.
 
 ## Explainability: Grad-CAM vs. Attention Rollout
 

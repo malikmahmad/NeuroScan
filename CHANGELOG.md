@@ -28,15 +28,24 @@ First complete, working version. Everything below is actually implemented and ve
 
 See [README — Known Limitations](README.md#known-limitations) for the full list. Short version: no automated tests, a GradCAM hook leak on long-running servers, a dev-mode-only Docker frontend, loose dependency pinning, one deprecated matplotlib call, an MRI validator that's a heuristic rather than a real classifier, and CORS open to all origins.
 
+## [1.0.1] - 2026-06-28
+
+Fixes for the known issues documented at v1.0.0 release.
+
+### Fixed
+
+- **GradCAM hook leak** — `GradCAM` is now a cached property on `ModelRegistry` (`cnn_gradcam`, `efficientnet_gradcam`). Hooks register once when the model first loads and stay registered for the process lifetime. Previously a new `GradCAM` object (and new hooks) was constructed on every `classify()` call.
+- **No tests** — `backend/tests/` now has 17 passing pytest tests: model output shapes for all four architectures, GradCAM caching (regression for the hook leak), `WeightsNotFoundError` path, `blend_cam_overlay` output, and the MRI RGB channel check. All pass without requiring `.pth` checkpoints.
+- **Deprecated matplotlib call** — `cm.get_cmap("jet")` replaced with `matplotlib.colormaps["jet"]`.
+- **Loose dependency pinning** — `requirements.txt` now uses exact versions (`torch==2.12.1`, `fastapi==0.138.1`, etc.) rather than lower-bound ranges.
+
 ## [1.1.0] - planned
 
-Maintenance pass on the items above that don't require new modeling work:
+Remaining maintenance items:
 
-- Cache `GradCAM` per model in `ModelRegistry` instead of reconstructing it (and re-registering hooks) on every `classify()` call.
-- Pin `requirements.txt` to exact versions instead of lower bounds.
-- Replace the deprecated `matplotlib.cm.get_cmap()` call with `matplotlib.colormaps[...]`.
-- Add a `tests/` directory with actual `pytest` coverage for the backend, starting with `inference.py`'s checkpoint-missing path and a basic classify call.
 - nginx-based production Docker build for the frontend, replacing the current dev-server setup.
+- A more principled MRI input check — the current channel-difference heuristic is a tripwire, not a real validator.
+- Restrict CORS from `allow_origins=["*"]` to an explicit origin list for anyone deploying this beyond localhost.
 
 ## [2.0.0] - planned
 
