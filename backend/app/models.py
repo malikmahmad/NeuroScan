@@ -9,14 +9,28 @@ CLASS_NAMES = ["glioma", "meningioma", "notumor", "pituitary"]
 def build_custom_cnn(num_classes: int = NUM_CLASSES) -> nn.Module:
     """Four conv blocks trained from scratch, used as the local-feature baseline."""
     return nn.Sequential(
-        nn.Conv2d(3, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(), nn.MaxPool2d(2),
-        nn.Conv2d(32, 64, 3, padding=1), nn.BatchNorm2d(64), nn.ReLU(), nn.MaxPool2d(2),
-        nn.Conv2d(64, 128, 3, padding=1), nn.BatchNorm2d(128), nn.ReLU(), nn.MaxPool2d(2),
-        nn.Conv2d(128, 256, 3, padding=1), nn.BatchNorm2d(256), nn.ReLU(), nn.MaxPool2d(2),
+        nn.Conv2d(3, 32, 3, padding=1),
+        nn.BatchNorm2d(32),
+        nn.ReLU(),
+        nn.MaxPool2d(2),
+        nn.Conv2d(32, 64, 3, padding=1),
+        nn.BatchNorm2d(64),
+        nn.ReLU(),
+        nn.MaxPool2d(2),
+        nn.Conv2d(64, 128, 3, padding=1),
+        nn.BatchNorm2d(128),
+        nn.ReLU(),
+        nn.MaxPool2d(2),
+        nn.Conv2d(128, 256, 3, padding=1),
+        nn.BatchNorm2d(256),
+        nn.ReLU(),
+        nn.MaxPool2d(2),
         nn.AdaptiveAvgPool2d((1, 1)),
         nn.Flatten(),
         nn.Dropout(0.3),
-        nn.Linear(256, 128), nn.ReLU(), nn.Dropout(0.3),
+        nn.Linear(256, 128),
+        nn.ReLU(),
+        nn.Dropout(0.3),
         nn.Linear(128, num_classes),
     )
 
@@ -90,9 +104,9 @@ class UNet(nn.Module):
         e2 = self.enc2(self.pool(e1))
         e3 = self.enc3(self.pool(e2))
         e4 = self.enc4(self.pool(e3))
-        b  = self.bottleneck(self.pool(e4))
+        b = self.bottleneck(self.pool(e4))
 
-        d4 = self.dec4(torch.cat([self.up4(b),  e4], dim=1))
+        d4 = self.dec4(torch.cat([self.up4(b), e4], dim=1))
         d3 = self.dec3(torch.cat([self.up3(d4), e3], dim=1))
         d2 = self.dec2(torch.cat([self.up2(d3), e2], dim=1))
         d1 = self.dec1(torch.cat([self.up1(d2), e1], dim=1))

@@ -31,28 +31,38 @@ app.add_middleware(
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 CLASSIFICATION_METRICS_DIR = next(
-    (p for p in [
-        _PROJECT_ROOT / "notebooks" / "outputs" / "metrics",
-        _PROJECT_ROOT / "outputs" / "metrics",
-    ] if p.exists()),
+    (
+        p
+        for p in [
+            _PROJECT_ROOT / "notebooks" / "outputs" / "metrics",
+            _PROJECT_ROOT / "outputs" / "metrics",
+        ]
+        if p.exists()
+    ),
     None,
 )
 
 SEGMENTATION_METRICS_DIR = next(
-    (p for p in [
-        _PROJECT_ROOT / "notebooks" / "outputs_segmentation" / "metrics",
-        _PROJECT_ROOT / "outputs_segmentation" / "metrics",
-    ] if p.exists()),
+    (
+        p
+        for p in [
+            _PROJECT_ROOT / "notebooks" / "outputs_segmentation" / "metrics",
+            _PROJECT_ROOT / "outputs_segmentation" / "metrics",
+        ]
+        if p.exists()
+    ),
     None,
 )
 
 
 def _read_image(upload: UploadFile) -> Image.Image:
     if not upload.content_type or not upload.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Expected an image file (PNG, JPEG, or TIFF).")
+        raise HTTPException(
+            status_code=400, detail="Expected an image file (PNG, JPEG, or TIFF)."
+        )
     try:
         data = upload.file.read()
-        img  = Image.open(io.BytesIO(data))
+        img = Image.open(io.BytesIO(data))
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Could not open image: {exc}")
 
@@ -61,11 +71,16 @@ def _read_image(upload: UploadFile) -> Image.Image:
     rgb = img.convert("RGB")
     arr = np.array(rgb, dtype=np.float32)
     r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
-    channel_diff = (np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()) / 3.0
+    channel_diff = (
+        np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()
+    ) / 3.0
     if channel_diff > 18.0:
         raise HTTPException(
             status_code=422,
-            detail="This does not look like an MRI scan. Please upload a grayscale brain MRI slice (axial T1/T2/FLAIR).",
+            detail=(
+                "This does not look like an MRI scan. "
+                "Please upload a grayscale brain MRI slice (axial T1/T2/FLAIR)."
+            ),
         )
 
     return img
@@ -91,33 +106,50 @@ def models_status():
 @app.get("/api/metrics/classification")
 def classification_metrics():
     if not CLASSIFICATION_METRICS_DIR:
-        return JSONResponse({
-            "available": False,
-            "message": "No metrics found. Run the classification notebook and place the outputs/ folder under notebooks/."
-        })
+        return JSONResponse(
+            {
+                "available": False,
+                "message": (
+                    "No metrics found. Run the classification notebook "
+                    "and place the outputs/ folder under notebooks/."
+                ),
+            }
+        )
     models = ["cnn", "efficientnet", "vit"]
     data = {}
     for m in models:
-        test    = _load_json(CLASSIFICATION_METRICS_DIR / f"{m}_test_results.json")
+        test = _load_json(CLASSIFICATION_METRICS_DIR / f"{m}_test_results.json")
         history = _load_json(CLASSIFICATION_METRICS_DIR / f"{m}_history.json")
         if test or history:
             data[m] = {"test": test, "history": history}
     if not data:
-        return JSONResponse({"available": False, "message": "Metrics folder found but files are missing."})
+        return JSONResponse(
+            {
+                "available": False,
+                "message": "Metrics folder found but files are missing.",
+            }
+        )
     return JSONResponse({"available": True, "models": data})
 
 
 @app.get("/api/metrics/segmentation")
 def segmentation_metrics():
     if not SEGMENTATION_METRICS_DIR:
-        return JSONResponse({
-            "available": False,
-            "message": "No segmentation metrics found. Run the segmentation notebook first."
-        })
-    test    = _load_json(SEGMENTATION_METRICS_DIR / "segmentation_test_results.json")
+        return JSONResponse(
+            {
+                "available": False,
+                "message": "No segmentation metrics found. Run the segmentation notebook first.",
+            }
+        )
+    test = _load_json(SEGMENTATION_METRICS_DIR / "segmentation_test_results.json")
     history = _load_json(SEGMENTATION_METRICS_DIR / "segmentation_history.json")
     if not test and not history:
-        return JSONResponse({"available": False, "message": "Segmentation metrics folder found but files are missing."})
+        return JSONResponse(
+            {
+                "available": False,
+                "message": "Segmentation metrics folder found but files are missing.",
+            }
+        )
     return JSONResponse({"available": True, "test": test, "history": history})
 
 
@@ -128,7 +160,9 @@ def classify_endpoint(
 ):
     image = _read_image(file)
     try:
-        return JSONResponse(inference.classify(image, model_name=model_name, explain=True))
+        return JSONResponse(
+            inference.classify(image, model_name=model_name, explain=True)
+        )
     except WeightsNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
 

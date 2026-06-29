@@ -20,7 +20,9 @@ class GradCAM:
     def _save_gradient(self, module, grad_input, grad_output):
         self.gradients = grad_output[0].detach()
 
-    def generate(self, input_tensor: torch.Tensor, image_size: int, class_idx: int = None):
+    def generate(
+        self, input_tensor: torch.Tensor, image_size: int, class_idx: int = None
+    ):
         input_tensor = input_tensor.clone().requires_grad_()
         output = self.model(input_tensor)
 
@@ -33,7 +35,9 @@ class GradCAM:
         weights = self.gradients.mean(dim=(2, 3), keepdim=True)
         cam = (weights * self.activations).sum(dim=1, keepdim=True)
         cam = F.relu(cam)
-        cam = F.interpolate(cam, size=(image_size, image_size), mode="bilinear", align_corners=False)
+        cam = F.interpolate(
+            cam, size=(image_size, image_size), mode="bilinear", align_corners=False
+        )
         cam = cam.squeeze().detach().cpu().numpy()
         cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
 
@@ -95,11 +99,15 @@ def vit_attention_rollout(model, input_tensor: torch.Tensor):
     return cam, pred_idx, probs
 
 
-def blend_cam_overlay(pil_image: Image.Image, cam: np.ndarray, alpha: float = 0.45) -> Image.Image:
+def blend_cam_overlay(
+    pil_image: Image.Image, cam: np.ndarray, alpha: float = 0.45
+) -> Image.Image:
     """Blend a CAM heatmap over the original image and return the composite."""
     import matplotlib
 
-    cam_img = Image.fromarray((cam * 255).astype(np.uint8)).resize(pil_image.size, Image.BILINEAR)
+    cam_img = Image.fromarray((cam * 255).astype(np.uint8)).resize(
+        pil_image.size, Image.BILINEAR
+    )
     cam_resized = np.array(cam_img) / 255.0
 
     heatmap = matplotlib.colormaps["jet"](cam_resized)[:, :, :3]
