@@ -22,6 +22,7 @@ export default function ToolSection() {
   const [imageUrl, setImageUrl]                 = useState<string | null>(null);
   const [analyzing, setAnalyzing]               = useState(false);
   const [error, setError]                       = useState<string | null>(null);
+  const [uploadKey, setUploadKey]               = useState(0); // increment to reset UploadZone
 
   const [singleResult, setSingleResult] = useState<{
     classification: ClassifyResult;
@@ -38,6 +39,14 @@ export default function ToolSection() {
       .catch(() => { setBackendReachable(false); setError("Could not reach the backend. Is the API server running on port 8000?"); })
       .finally(() => setStatusLoading(false));
   }, []);
+
+  const clearAll = () => {
+    setSingleResult(null);
+    setCompareResult(null);
+    setImageUrl(null);
+    setError(null);
+    setUploadKey((k) => k + 1);
+  };
 
   const handleFile = async (file: File) => {
     setError(null); setSingleResult(null); setCompareResult(null);
@@ -95,7 +104,7 @@ export default function ToolSection() {
               <button
                 key={m} role="tab" aria-selected={mode === m}
                 className={`mode-toggle__btn${mode === m ? " mode-toggle__btn--active" : ""}`}
-                onClick={() => setMode(m)}
+                onClick={() => { setMode(m); clearAll(); }}
               >
                 {m === "single" ? "Single model" : "Compare all 3"}
               </button>
@@ -107,7 +116,7 @@ export default function ToolSection() {
                 <button
                   key={m}
                   className={`model-select__btn${selectedModel === m ? " model-select__btn--active" : ""}`}
-                  onClick={() => setSelectedModel(m)}
+                  onClick={() => { setSelectedModel(m); clearAll(); }}
                   disabled={modelsStatus ? !modelsStatus[m] : false}
                 >
                   {m === "cnn" ? "CNN" : m === "efficientnet" ? "EfficientNet" : "ViT"}
@@ -117,7 +126,7 @@ export default function ToolSection() {
           )}
         </div>
 
-        <UploadZone onFileSelected={handleFile} disabled={analyzing} />
+        <UploadZone onFileSelected={handleFile} disabled={analyzing} reset={uploadKey} />
 
         {error && <div className="banner banner--error fade-in-up">{error}</div>}
 

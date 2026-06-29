@@ -1,14 +1,22 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
   onFileSelected: (file: File) => void;
   disabled?: boolean;
+  reset?: number; // increment this to clear the zone
 }
 
-export default function UploadZone({ onFileSelected, disabled }: Props) {
+export default function UploadZone({ onFileSelected, disabled, reset }: Props) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileName, setFileName]     = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Clear filename and input value whenever parent signals a reset
+  useEffect(() => {
+    if (reset === undefined) return;
+    setFileName(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }, [reset]);
 
   const select = useCallback(
     (file: File) => { setFileName(file.name); onFileSelected(file); },
