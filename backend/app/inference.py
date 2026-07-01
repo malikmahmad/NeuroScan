@@ -45,8 +45,7 @@ def _load_checkpoint(model: torch.nn.Module, filename: str) -> torch.nn.Module:
     if not path.exists():
         raise WeightsNotFoundError(
             f"Checkpoint not found: {path}. "
-            "Run the training notebooks on Kaggle and copy the resulting "
-            ".pth files into backend/models/ before starting the server."
+            "Add the corresponding .pth file to backend/models/ before starting the server."
         )
     state_dict = torch.load(path, map_location=DEVICE)
     model.load_state_dict(state_dict)
@@ -259,7 +258,7 @@ def full_analysis(image: Image.Image, classifier: str = "efficientnet") -> dict:
             result["segmentation"] = segment(image)
         else:
             result["segmentation"] = {
-                "note": "Tumor detected but segmentation weights not found in backend/models/."
+                "note": "Tumor detected, but segmentation weights are missing from backend/models/."
             }
 
     return result

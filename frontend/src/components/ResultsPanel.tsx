@@ -149,7 +149,7 @@ async function downloadReport(
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(seg.tumor_detected ? amber : teal);
-    doc.text(seg.tumor_detected ? "Detected" : "Not found", margin + 3, y + 13);
+    doc.text(seg.tumor_detected ? "Detected" : "Not detected", margin + 3, y + 13);
 
     doc.setFillColor(light);
     doc.setDrawColor(220, 225, 230);

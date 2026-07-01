@@ -108,8 +108,7 @@ def classification_metrics():
             {
                 "available": False,
                 "message": (
-                    "No metrics found. Run the classification notebook "
-                    "and place the outputs/ folder under notebooks/."
+                    "No metrics found yet. Place the classification outputs/ folder under notebooks/."
                 ),
             }
         )
@@ -136,7 +135,7 @@ def segmentation_metrics():
         return JSONResponse(
             {
                 "available": False,
-                "message": "No segmentation metrics found. Run the segmentation notebook first.",
+                "message": "No segmentation metrics found yet. Place the segmentation outputs folder under notebooks/.",
             }
         )
     test = _load_json(SEGMENTATION_METRICS_DIR / "segmentation_test_results.json")
@@ -145,7 +144,7 @@ def segmentation_metrics():
         return JSONResponse(
             {
                 "available": False,
-                "message": "Segmentation metrics folder found but files are missing.",
+                "message": "Segmentation metrics folder found, but the expected files are missing.",
             }
         )
     return JSONResponse({"available": True, "test": test, "history": history})

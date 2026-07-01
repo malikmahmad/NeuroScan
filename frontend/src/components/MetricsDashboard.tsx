@@ -70,8 +70,8 @@ export default function MetricsDashboard() {
 
           {!loading && !hasClassData && !hasSegData && (
             <p className="metrics-empty">
-              No training metrics available. Download the <code>outputs/</code> folders from your
-              Kaggle notebooks and place them in <code>notebooks/</code>.
+              No training metrics are available yet. Copy the generated <code>outputs/</code>
+              folders into <code>notebooks/</code> to load the saved results.
             </p>
           )}
 

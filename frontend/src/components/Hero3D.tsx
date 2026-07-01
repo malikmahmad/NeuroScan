@@ -1,234 +1,355 @@
-import { useEffect, useRef } from "react";
+import { useRef, useMemo } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 
-export default function Hero3D() {
-  const mountRef = useRef<HTMLDivElement>(null);
+const NODE_VERT = `
+  uniform float uTime;
+  uniform float uPhase;
+  varying vec3 vNormal;
+  void main() {
+    vNormal = normal;
+    float s = 1.0 + 0.06 * sin(uTime * 2.2 + uPhase);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position * s, 1.0);
+  }
+`;
 
-  useEffect(() => {
-    const container = mountRef.current;
-    if (!container) return;
-    const pref = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const NODE_FRAG = `
+  uniform vec3  uColor;
+  uniform float uTime;
+  uniform float uPhase;
+  varying vec3  vNormal;
+  void main() {
+    float f = pow(1.0 - abs(dot(normalize(vNormal), vec3(0,0,1))), 1.8);
+    float p = 0.6 + 0.4 * sin(uTime * 2.2 + uPhase);
+    vec3  c = uColor * (0.7 + f * 0.8) * p;
+    gl_FragColor = vec4(c, 0.5 + f * 0.5);
+  }
+`;
 
-    const W = container.offsetWidth  || 500;
-    const H = container.offsetHeight || 460;
+const RING_VERT = `
+  varying vec3 vNormal;
+  void main() {
+    vNormal = normal;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(W, H);
-    renderer.setClearColor(0x000000, 0);
-    container.appendChild(renderer.domElement);
+const RING_FRAG = `
+  uniform vec3  uColor;
+  uniform float uTime;
+  uniform float uPhase;
+  varying vec3  vNormal;
+  void main() {
+    float p = 0.3 + 0.7 * abs(sin(uTime * 1.8 + uPhase));
+    gl_FragColor = vec4(uColor, p * 0.7);
+  }
+`;
 
-    const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 100);
-    camera.position.set(0, 0, 4.0);
+const BEAM_VERT = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
 
-    const onResize = () => {
-      const w = container.offsetWidth  || W;
-      const h = container.offsetHeight || H;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-    window.addEventListener("resize", onResize);
+const BEAM_FRAG = `
+  uniform vec3  uColor;
+  uniform float uTime;
+  uniform float uOffset;
+  varying vec2  vUv;
+  void main() {
+    float flow   = fract(vUv.x * 1.5 - uTime * 0.6 + uOffset);
+    float streak = smoothstep(0.0, 0.2, flow) * smoothstep(0.55, 0.2, flow);
+    float edge   = 1.0 - abs(vUv.y * 2.0 - 1.0);
+    float alpha  = streak * edge * 0.9;
+    gl_FragColor = vec4(uColor, alpha);
+  }
+`;
 
-    const root = new THREE.Group();
-    scene.add(root);
+const CENTER_VERT = `
+  uniform float uTime;
+  varying vec3 vNormal;
+  void main() {
+    vNormal = normal;
+    float s = 1.0 + 0.04 * sin(uTime * 1.5);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position * s, 1.0);
+  }
+`;
 
-    const pH = 2.15;
-    let   pW = pH * 1.33;
+const CENTER_FRAG = `
+  uniform float uTime;
+  varying vec3 vNormal;
+  void main() {
+    float f = pow(1.0 - abs(dot(normalize(vNormal), vec3(0,0,1))), 1.6);
+    float p = 0.75 + 0.25 * sin(uTime * 1.5);
+    vec3  c = vec3(0.0, 0.83, 1.0) * p + vec3(0.1, 0.5, 1.0) * f;
+    gl_FragColor = vec4(c, 0.55 + f * 0.45);
+  }
+`;
 
-    const brainMat = new THREE.MeshStandardMaterial({
-      transparent:       true,
-      opacity:           0,
-      roughness:         0.3,
-      metalness:         0,
-      emissive:          new THREE.Color(0x001f3a),
-      emissiveIntensity: 0.35,
-    });
-    const brainMesh = new THREE.Mesh(new THREE.PlaneGeometry(pW, pH), brainMat);
-    root.add(brainMesh);
+type Vec3 = [number, number, number];
 
-    new THREE.TextureLoader().load(
-      "/brain.png",
-      (tex) => {
-        tex.colorSpace    = THREE.SRGBColorSpace;
-        brainMat.map      = tex;
-        brainMat.opacity  = 1;
-        brainMat.needsUpdate = true;
-        const w = pH * (tex.image.width / tex.image.height);
-        pW = w;
-        brainMesh.geometry.dispose();
-        brainMesh.geometry = new THREE.PlaneGeometry(w, pH);
-      },
-      undefined,
-      () => {
-        brainMat.opacity = 0.6;
-        brainMat.needsUpdate = true;
-      }
-    );
+const CENTER_POS: Vec3 = [0, 0, 0];
 
-    const innerGlowMat = new THREE.MeshBasicMaterial({
-      color: 0x004488, transparent: true, opacity: 0.20, depthWrite: false,
-    });
-    const innerGlow = new THREE.Mesh(
-      new THREE.PlaneGeometry(pW * 1.20, pH * 1.14),
-      innerGlowMat
-    );
-    innerGlow.position.z = -0.06;
-    root.add(innerGlow);
+const NODES: { label: string; pos: Vec3; color: THREE.Color; phase: number }[] = [
+  { label: "CNN",          pos: [-2.6,  1.2, 0], color: new THREE.Color(0.18, 0.62, 1.0),  phase: 0.0 },
+  { label: "EfficientNet", pos: [ 0.0, -2.2, 0], color: new THREE.Color(0.00, 0.90, 0.95), phase: 2.1 },
+  { label: "ViT-B/16",     pos: [ 2.6,  1.2, 0], color: new THREE.Color(0.60, 0.45, 1.0),  phase: 4.2 },
+];
 
-    const outerHaloMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(pW * 1.90, pH * 1.72),
-      new THREE.MeshBasicMaterial({ color: 0x001e40, transparent: true, opacity: 0.09, depthWrite: false })
-    );
-    outerHaloMesh.position.z = -0.16;
-    root.add(outerHaloMesh);
+function ModelNode({ pos, color, phase }: { pos: Vec3; color: THREE.Color; phase: number }) {
+  const meshRef = useRef<THREE.Mesh>(null!);
+  const r1Ref   = useRef<THREE.Mesh>(null!);
+  const r2Ref   = useRef<THREE.Mesh>(null!);
 
-    const scanLineMat = new THREE.MeshBasicMaterial({
-      color: 0x00e5ff, transparent: true, opacity: 0.48,
-      side: THREE.DoubleSide, depthWrite: false,
-    });
-    const scanLine = new THREE.Mesh(
-      new THREE.PlaneGeometry(pW * 1.10, 0.003),
-      scanLineMat
-    );
-    scene.add(scanLine);
+  const uNode = useMemo(() => ({
+    uTime:  { value: 0 },
+    uColor: { value: color },
+    uPhase: { value: phase },
+  }), [color, phase]);
 
-    const scanGlowMat = new THREE.MeshBasicMaterial({
-      color: 0x00c8ff, transparent: true, opacity: 0.09,
-      side: THREE.DoubleSide, depthWrite: false,
-    });
-    const scanGlowMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(pW * 1.10, 0.09),
-      scanGlowMat
-    );
-    scene.add(scanGlowMesh);
+  const uRing = useMemo(() => ({
+    uTime:  { value: 0 },
+    uColor: { value: color },
+    uPhase: { value: phase },
+  }), [color, phase]);
 
-    const bracketMat = new THREE.LineBasicMaterial({
-      color: 0x00aadd, transparent: true, opacity: 0.42,
-    });
-    const arm = 0.17;
-    const pad = 0.06;
-    [
-      { x: -(pW * 0.5 + pad), y:  (pH * 0.5 + pad), sx:  1, sy: -1 },
-      { x:  (pW * 0.5 + pad), y:  (pH * 0.5 + pad), sx: -1, sy: -1 },
-      { x: -(pW * 0.5 + pad), y: -(pH * 0.5 + pad), sx:  1, sy:  1 },
-      { x:  (pW * 0.5 + pad), y: -(pH * 0.5 + pad), sx: -1, sy:  1 },
-    ].forEach(({ x, y, sx, sy }) => {
-      root.add(new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(x,             y + sy * arm, 0.02),
-          new THREE.Vector3(x,             y,            0.02),
-          new THREE.Vector3(x + sx * arm,  y,            0.02),
-        ]),
-        bracketMat.clone()
-      ));
-    });
+  const geo  = useMemo(() => new THREE.IcosahedronGeometry(0.32, 3), []);
+  const rGeo = useMemo(() => new THREE.TorusGeometry(0.48, 0.014, 12, 64), []);
 
-    const readMat = new THREE.LineBasicMaterial({
-      color: 0x007799, transparent: true, opacity: 0.32,
-    });
-    const dotMat = new THREE.MeshBasicMaterial({
-      color: 0x00aacc, transparent: true, opacity: 0.65,
-    });
-    [0.52, 0.16, -0.20, -0.54].forEach((y) => {
-      const x0 = pW * 0.40;
-      const x1 = pW * 0.55;
-      root.add(new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(x0, y, 0.02),
-          new THREE.Vector3(x1, y, 0.02),
-        ]),
-        readMat.clone()
-      ));
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.010, 8, 8), dotMat.clone());
-      dot.position.set(x1, y, 0.02);
-      root.add(dot);
-    });
-
-    const PARTICLE_COUNT = 75;
-    const pBuf = new Float32Array(PARTICLE_COUNT * 3);
-    type Particle = { x: number; y: number; z: number; vx: number; vy: number; ph: number };
-    const pData: Particle[] = [];
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const x = (Math.random() - 0.5) * pW * 1.9;
-      const y = (Math.random() - 0.5) * pH * 1.7;
-      const z = (Math.random() - 0.5) * 0.5;
-      pBuf[i * 3]     = x;
-      pBuf[i * 3 + 1] = y;
-      pBuf[i * 3 + 2] = z;
-      pData.push({ x, y, z, vx: (Math.random() - 0.5) * 0.0014, vy: (Math.random() - 0.5) * 0.0014, ph: Math.random() * Math.PI * 2 });
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    uNode.uTime.value = t;
+    uRing.uTime.value = t;
+    if (meshRef.current) {
+      meshRef.current.rotation.y = t * 0.5 + phase;
+      meshRef.current.rotation.x = Math.sin(t * 0.3 + phase) * 0.2;
     }
-    const particleGeo = new THREE.BufferGeometry();
-    particleGeo.setAttribute("position", new THREE.BufferAttribute(pBuf, 3));
-    scene.add(new THREE.Points(particleGeo, new THREE.PointsMaterial({
-      color: 0x2288bb, size: 0.017, transparent: true,
-      opacity: 0.50, sizeAttenuation: true, depthWrite: false,
-    })));
+    if (r1Ref.current) r1Ref.current.rotation.z =  t * 0.6 + phase;
+    if (r2Ref.current) r2Ref.current.rotation.z = -t * 0.4 + phase;
+  });
 
-    scene.add(new THREE.AmbientLight(0x0a1830, 6.5));
-    const keyLight = new THREE.DirectionalLight(0x4488aa, 3.8);
-    keyLight.position.set(2, 3, 5);
-    scene.add(keyLight);
-    const fillLight = new THREE.DirectionalLight(0x001e44, 1.2);
-    fillLight.position.set(-4, -2, -2);
-    scene.add(fillLight);
-    const rimLight = new THREE.DirectionalLight(0x00aacc, 1.4);
-    rimLight.position.set(0, -2, -4);
-    scene.add(rimLight);
+  return (
+    <group position={pos}>
+      <mesh ref={meshRef} geometry={geo}>
+        <shaderMaterial vertexShader={NODE_VERT} fragmentShader={NODE_FRAG} uniforms={uNode} transparent />
+      </mesh>
+      <mesh ref={r1Ref} geometry={rGeo}>
+        <shaderMaterial vertexShader={RING_VERT} fragmentShader={RING_FRAG} uniforms={uRing} transparent depthWrite={false} />
+      </mesh>
+      <mesh ref={r2Ref} geometry={useMemo(() => new THREE.TorusGeometry(0.60, 0.008, 12, 64), [])}>
+        <shaderMaterial
+          vertexShader={RING_VERT}
+          fragmentShader={RING_FRAG}
+          uniforms={{ ...uRing, uPhase: { value: phase + 1.0 } }}
+          transparent
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
+  );
+}
 
-    let t = 0;
-    let scanT = 0;
-    let animId: number;
+function CenterNode() {
+  const meshRef = useRef<THREE.Mesh>(null!);
+  const r1Ref   = useRef<THREE.Mesh>(null!);
+  const r2Ref   = useRef<THREE.Mesh>(null!);
 
-    const tick = () => {
-      animId = requestAnimationFrame(tick);
-      if (!pref) { t += 0.007; scanT += 0.006; }
+  const uCenter = useMemo(() => ({ uTime: { value: 0 } }), []);
+  const uRing   = useMemo(() => ({
+    uTime:  { value: 0 },
+    uColor: { value: new THREE.Color(0.0, 0.83, 1.0) },
+    uPhase: { value: 0 },
+  }), []);
 
-      root.position.y = Math.sin(t * 0.55) * 0.038;
+  const geo = useMemo(() => new THREE.IcosahedronGeometry(0.50, 4), []);
+  const r1  = useMemo(() => new THREE.TorusGeometry(0.72, 0.018, 12, 80), []);
+  const r2  = useMemo(() => new THREE.TorusGeometry(0.88, 0.010, 12, 80), []);
 
-      innerGlowMat.opacity = 0.16 + Math.sin(t * 0.4) * 0.06;
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    uCenter.uTime.value = t;
+    uRing.uTime.value   = t;
+    if (meshRef.current) {
+      meshRef.current.rotation.y = t * 0.25;
+      meshRef.current.rotation.x = t * 0.18;
+    }
+    if (r1Ref.current) r1Ref.current.rotation.z =  t * 0.35;
+    if (r2Ref.current) r2Ref.current.rotation.z = -t * 0.28;
+  });
 
-      const sy = Math.sin(scanT) * pH * 0.46;
-      scanLine.position.set(0, sy + root.position.y, 0.03);
-      scanGlowMesh.position.set(0, sy + root.position.y, 0.02);
-      scanLineMat.opacity = 0.36 + Math.sin(scanT + 1.1) * 0.14;
-      scanGlowMat.opacity = 0.06 + Math.sin(scanT + 1.1) * 0.04;
+  return (
+    <group position={CENTER_POS}>
+      <mesh ref={meshRef} geometry={geo}>
+        <shaderMaterial vertexShader={CENTER_VERT} fragmentShader={CENTER_FRAG} uniforms={uCenter} transparent />
+      </mesh>
+      <mesh ref={r1Ref} geometry={r1}>
+        <shaderMaterial vertexShader={RING_VERT} fragmentShader={RING_FRAG} uniforms={uRing} transparent depthWrite={false} />
+      </mesh>
+      <mesh ref={r2Ref} geometry={r2}>
+        <shaderMaterial
+          vertexShader={RING_VERT}
+          fragmentShader={RING_FRAG}
+          uniforms={{ ...uRing, uPhase: { value: 1.4 } }}
+          transparent
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
+  );
+}
 
-      const pos = particleGeo.attributes.position as THREE.BufferAttribute;
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const d = pData[i];
-        d.x += d.vx + Math.sin(t * 0.7 + d.ph) * 0.0004;
-        d.y += d.vy + Math.cos(t * 0.5 + d.ph) * 0.0004;
-        if (d.x >  pW * 0.92) d.x = -pW * 0.92;
-        if (d.x < -pW * 0.92) d.x =  pW * 0.92;
-        if (d.y >  pH * 0.82) d.y = -pH * 0.82;
-        if (d.y < -pH * 0.82) d.y =  pH * 0.82;
-        pos.setXYZ(i, d.x, d.y + root.position.y * 0.3, d.z);
-      }
-      pos.needsUpdate = true;
+function Beam({ from, to, color, offset }: { from: Vec3; to: Vec3; color: THREE.Color; offset: number }) {
+  const ref = useRef<THREE.Mesh>(null!);
 
-      renderer.render(scene, camera);
-    };
+  const { geo, pos, rot } = useMemo(() => {
+    const a  = new THREE.Vector3(...from);
+    const b  = new THREE.Vector3(...to);
+    const dir = b.clone().sub(a);
+    const len = dir.length();
+    const mid = a.clone().add(b).multiplyScalar(0.5);
 
-    tick();
+    const g = new THREE.PlaneGeometry(len, 0.032, 80, 1);
 
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", onResize);
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-    };
+    const angle = Math.atan2(dir.y, dir.x);
+    return { geo: g, pos: mid.toArray() as Vec3, rot: angle };
+  }, [from, to]);
+
+  const u = useMemo(() => ({
+    uTime:   { value: 0 },
+    uColor:  { value: color },
+    uOffset: { value: offset },
+  }), [color, offset]);
+
+  useFrame((s) => { u.uTime.value = s.clock.elapsedTime; });
+
+  return (
+    <mesh ref={ref} geometry={geo} position={pos} rotation={[0, 0, rot]}>
+      <shaderMaterial
+        vertexShader={BEAM_VERT}
+        fragmentShader={BEAM_FRAG}
+        uniforms={u}
+        transparent
+        depthWrite={false}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+
+function Particles() {
+  const ref = useRef<THREE.Points>(null!);
+
+  const { buf, init, vel } = useMemo(() => {
+    const N   = 200;
+    const b   = new Float32Array(N * 3);
+    const ini = new Float32Array(N * 3);
+    const v   = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      const r  = 1.6 + Math.random() * 2.2;
+      const th = Math.random() * Math.PI * 2;
+      const ph = (Math.random() - 0.5) * Math.PI;
+      const x  = r * Math.cos(ph) * Math.cos(th);
+      const y  = r * Math.sin(ph);
+      const z  = r * Math.cos(ph) * Math.sin(th);
+      b[i*3] = ini[i*3] = x;
+      b[i*3+1] = ini[i*3+1] = y;
+      b[i*3+2] = ini[i*3+2] = z;
+      v[i*3]   = (Math.random() - 0.5) * 0.004;
+      v[i*3+1] = (Math.random() - 0.5) * 0.004;
+      v[i*3+2] = (Math.random() - 0.5) * 0.004;
+    }
+    return { buf: b, init: ini, vel: v };
   }, []);
 
+  useFrame((s) => {
+    if (!ref.current) return;
+    const t   = s.clock.elapsedTime * 0.25;
+    const pos = ref.current.geometry.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < 200; i++) {
+      pos.setXYZ(i,
+        init[i*3]   + Math.sin(t + vel[i*3]   * 1000) * 0.08,
+        init[i*3+1] + Math.cos(t + vel[i*3+1] * 1000) * 0.08,
+        init[i*3+2] + Math.sin(t + vel[i*3+2] * 1000) * 0.08,
+      );
+    }
+    pos.needsUpdate = true;
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[buf, 3]} />
+      </bufferGeometry>
+      <pointsMaterial color="#00d4ff" size={0.025} transparent opacity={0.55} sizeAttenuation depthWrite={false} />
+    </points>
+  );
+}
+
+function FloatWrapper({ children }: { children: React.ReactNode }) {
+  const ref = useRef<THREE.Group>(null!);
+  useFrame((s) => {
+    if (ref.current) ref.current.position.y = Math.sin(s.clock.elapsedTime * 0.4) * 0.07;
+  });
+  return <group ref={ref}>{children}</group>;
+}
+
+function Scene() {
+  return (
+    <>
+      <ambientLight intensity={0.08} />
+      <pointLight position={[0,  5, 4]} intensity={2.0} color="#00d4ff" distance={15} />
+      <pointLight position={[-4, 2, 2]} intensity={0.9} color="#4facfe" distance={12} />
+      <pointLight position={[4,  2, 2]} intensity={0.9} color="#a78bfa" distance={12} />
+      <pointLight position={[0, -4, 2]} intensity={1.0} color="#00f2fe" distance={12} />
+
+      <FloatWrapper>
+        {NODES.map((n) => (
+          <ModelNode key={n.label} pos={n.pos} color={n.color} phase={n.phase} />
+        ))}
+        <CenterNode />
+        {NODES.map((n, i) => (
+          <Beam
+            key={n.label}
+            from={n.pos}
+            to={CENTER_POS}
+            color={n.color}
+            offset={i * 0.33}
+          />
+        ))}
+      </FloatWrapper>
+
+      <Particles />
+
+      <EffectComposer>
+        <Bloom luminanceThreshold={0.08} luminanceSmoothing={0.85} intensity={2.4} mipmapBlur />
+      </EffectComposer>
+    </>
+  );
+}
+
+export default function Hero3D() {
   return (
     <div
       className="hero-3d"
-      ref={mountRef}
       aria-hidden="true"
-      style={{ position: "relative", width: "100%", height: "100%" }}
-    />
+      style={{ width: "100%", height: "100%", minHeight: "460px" }}
+    >
+      <Canvas
+        camera={{ position: [0, 0, 7.2], fov: 40 }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.3,
+        }}
+        style={{ background: "transparent" }}
+        dpr={[1, 2]}
+      >
+        <Scene />
+      </Canvas>
+    </div>
   );
 }

@@ -268,12 +268,12 @@ The classification dataset's documentation notes that the SARTAJ-sourced glioma 
 
 Worth knowing before you build on this:
 
-1. **GradCAM hooks accumulate on a long-running server.** `classify()` constructs a fresh `GradCAM` object — and registers new forward/backward hooks — on every call instead of caching one per model in `ModelRegistry`. Doesn't matter for a request or two; would matter if this process stayed up for days.
+1. ~~**GradCAM hooks accumulate on a long-running server.**~~ Fixed — `GradCAM` is now a cached property on `ModelRegistry` (`cnn_gradcam`, `efficientnet_gradcam`), so hooks register once per model and stay registered for the process lifetime instead of accumulating on every `classify()` call.
 2. **The MRI validation is a heuristic, not a real input validator.** It checks mean RGB channel difference and rejects anything over ~18. A desaturated color photo would sail right through. It catches the obvious case (someone uploads a random JPEG) and nothing more.
 3. **Docker's frontend service runs `npm run dev`.** That's Vite's dev server, meant for local development. Deploying this for real means `npm run build` served through nginx or similar, not the dev server.
-4. **`requirements.txt` uses loose version bounds** (`torch>=2.10.0` and similar) rather than exact pins. Reproducible enough for now; not pinned enough to guarantee identical behavior a year from now.
-5. **`gradcam.py` calls `matplotlib.cm.get_cmap("jet")`**, which newer matplotlib versions have deprecated in favor of `matplotlib.colormaps["jet"]`. Still works today; will eventually need updating.
-6. **There are no automated tests.** None. This is the single biggest gap if anyone wants to contribute safely.
+4. ~~**`requirements.txt` uses loose version bounds.**~~ Fixed — pinned to exact versions (`torch==2.12.1`, `fastapi==0.138.1`, and so on) rather than lower-bound ranges.
+5. ~~**`gradcam.py` calls the deprecated `matplotlib.cm.get_cmap("jet")`.**~~ Fixed — now uses `matplotlib.colormaps["jet"]`.
+6. ~~**There are no automated tests.**~~ Fixed — `backend/tests/` now has 17 passing pytest tests covering model output shapes, GradCAM caching, the `WeightsNotFoundError` path, and the MRI channel check. None require `.pth` checkpoints to run.
 7. **CORS is wide open** (`allow_origins=["*"]`). Fine for a research tool nobody's deploying publicly with real user data; not fine to copy-paste into something that is.
 
 Beyond the code itself: the ensemble mode (`/api/classify/compare`) is fully implemented and was exercised informally during development, but no aggregate accuracy across the full test set has actually been measured for it. There's no number reported here for ensemble accuracy because one hasn't been computed — see the paper's Future Work section.

@@ -96,7 +96,6 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
       const body = await res.json();
       detail = body.detail || detail;
     } catch {
-      // keep statusText
     }
     throw new ApiError(detail, res.status);
   }
