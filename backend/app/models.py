@@ -7,7 +7,6 @@ CLASS_NAMES = ["glioma", "meningioma", "notumor", "pituitary"]
 
 
 def build_custom_cnn(num_classes: int = NUM_CLASSES) -> nn.Module:
-    """Four conv blocks trained from scratch, used as the local-feature baseline."""
     return nn.Sequential(
         nn.Conv2d(3, 32, 3, padding=1),
         nn.BatchNorm2d(32),
@@ -36,7 +35,6 @@ def build_custom_cnn(num_classes: int = NUM_CLASSES) -> nn.Module:
 
 
 def build_efficientnet(num_classes: int = NUM_CLASSES) -> nn.Module:
-    """EfficientNet-B0 with the classifier head replaced. No pretrained weights loaded here."""
     model = models.efficientnet_b0(weights=None)
     in_features = model.classifier[1].in_features
     model.classifier = nn.Sequential(
@@ -47,7 +45,6 @@ def build_efficientnet(num_classes: int = NUM_CLASSES) -> nn.Module:
 
 
 def build_vit(num_classes: int = NUM_CLASSES) -> nn.Module:
-    """ViT-B/16 with a replaced classification head."""
     model = models.vit_b_16(weights=None)
     in_features = model.heads.head.in_features
     model.heads.head = nn.Linear(in_features, num_classes)
@@ -55,8 +52,6 @@ def build_vit(num_classes: int = NUM_CLASSES) -> nn.Module:
 
 
 class DoubleConv(nn.Module):
-    """Conv-BN-ReLU × 2. Reused at every encoder and decoder stage."""
-
     def __init__(self, in_ch: int, out_ch: int):
         super().__init__()
         self.block = nn.Sequential(
@@ -73,11 +68,6 @@ class DoubleConv(nn.Module):
 
 
 class UNet(nn.Module):
-    """
-    Standard U-Net for binary tumor segmentation (Ronneberger et al., 2015).
-    Output is raw logits — caller applies sigmoid.
-    """
-
     def __init__(self, in_channels: int = 3, out_channels: int = 1, base: int = 32):
         super().__init__()
         self.enc1 = DoubleConv(in_channels, base)

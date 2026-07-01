@@ -153,7 +153,6 @@ export default function Features() {
           position: relative;
           overflow: hidden;
           cursor: default;
-          /* hover handled separately below, reveal handles opacity/transform */
           transition:
             border-color 0.25s,
             box-shadow 0.25s,

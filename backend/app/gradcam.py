@@ -5,8 +5,6 @@ from PIL import Image
 
 
 class GradCAM:
-    """Grad-CAM for CNN/EfficientNet. Not valid for ViT — use vit_attention_rollout instead."""
-
     def __init__(self, model, target_layer):
         self.model = model
         self.activations = None
@@ -47,13 +45,6 @@ class GradCAM:
 
 @torch.no_grad()
 def vit_attention_rollout(model, input_tensor: torch.Tensor):
-    """
-    Attention Rollout for Vision Transformers (Abnar & Zuidema, 2020).
-
-    Multiplies attention matrices across all encoder layers, propagating token
-    influence back to input patches. The CLS token's row in the final matrix
-    indicates which patches the model attended to most.
-    """
     handles = []
     captured = {}
 
@@ -81,14 +72,12 @@ def vit_attention_rollout(model, input_tensor: torch.Tensor):
     attn_mats = [captured[i][0] for i in range(n_layers)]
     tokens = attn_mats[0].shape[-1]
 
-    # Add residual connection (identity) before normalising — Abnar & Zuidema §3
     rollout = torch.eye(tokens, device=input_tensor.device)
     for attn in attn_mats:
         attn = attn + torch.eye(tokens, device=input_tensor.device)
         attn = attn / attn.sum(dim=-1, keepdim=True)
         rollout = attn @ rollout
 
-    # Row 0 is the CLS token; patch tokens start at index 1
     cls_attention = rollout[0, 1:]
     grid_size = int(cls_attention.shape[0] ** 0.5)
     cam = cls_attention.reshape(grid_size, grid_size).cpu().numpy()
@@ -102,7 +91,6 @@ def vit_attention_rollout(model, input_tensor: torch.Tensor):
 def blend_cam_overlay(
     pil_image: Image.Image, cam: np.ndarray, alpha: float = 0.45
 ) -> Image.Image:
-    """Blend a CAM heatmap over the original image and return the composite."""
     import matplotlib
 
     cam_img = Image.fromarray((cam * 255).astype(np.uint8)).resize(

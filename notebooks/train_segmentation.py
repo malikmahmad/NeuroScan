@@ -31,9 +31,6 @@ for sub in ["weights", "figures", "metrics"]:
 
 assert os.path.exists(DATA_ROOT), f"Dataset not found at {DATA_ROOT}"
 
-# -----------------------------------------------------------------------
-# Build (image, mask) pairs
-# -----------------------------------------------------------------------
 all_images = sorted(glob.glob(os.path.join(DATA_ROOT, "*", "*.tif")))
 image_mask_pairs = [
     (p, p.replace(".tif", "_mask.tif"))
@@ -50,9 +47,6 @@ for _, mask_path in image_mask_pairs:
         negative += 1
 print(f"Tumor-positive: {positive}  Tumor-negative: {negative}")
 
-# -----------------------------------------------------------------------
-# Dataset
-# -----------------------------------------------------------------------
 class BrainMRISegDataset(Dataset):
     def __init__(self, pairs, image_size=IMAGE_SIZE, augment=False):
         self.pairs      = pairs
@@ -97,9 +91,6 @@ val_loader   = DataLoader(val_ds,   batch_size=BATCH_SIZE, shuffle=False, num_wo
 test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 print(f"Train: {n_train}  Val: {n_val}  Test: {n_test}")
 
-# -----------------------------------------------------------------------
-# U-Net
-# -----------------------------------------------------------------------
 class DoubleConv(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
@@ -148,9 +139,6 @@ class UNet(nn.Module):
 
         return self.out_conv(d1)
 
-# -----------------------------------------------------------------------
-# Loss and metrics
-# -----------------------------------------------------------------------
 def dice_coefficient(pred, target, smooth=1e-6):
     pred = (torch.sigmoid(pred) > 0.5).float()
     inter = (pred * target).sum(dim=(1, 2, 3))
@@ -178,9 +166,6 @@ class DiceBCELoss(nn.Module):
         dice_loss = 1 - ((2 * inter + smooth) / (union + smooth)).mean()
         return bce_loss + dice_loss
 
-# -----------------------------------------------------------------------
-# Training
-# -----------------------------------------------------------------------
 model     = UNet().to(DEVICE)
 criterion = DiceBCELoss()
 optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
@@ -228,9 +213,6 @@ for epoch in range(EPOCHS):
 with open(OUTPUT_DIR / "metrics" / "segmentation_history.json", "w") as f:
     json.dump(history, f, indent=2)
 
-# -----------------------------------------------------------------------
-# Test evaluation
-# -----------------------------------------------------------------------
 model.load_state_dict(torch.load(OUTPUT_DIR / "weights" / "unet_best.pth"))
 model.eval()
 
@@ -251,9 +233,6 @@ print(f"\nTest — Dice: {results['test_dice']:.4f}  IoU: {results['test_iou']:.
 with open(OUTPUT_DIR / "metrics" / "segmentation_test_results.json", "w") as f:
     json.dump(results, f, indent=2)
 
-# -----------------------------------------------------------------------
-# Qualitative figure
-# -----------------------------------------------------------------------
 def visualize_predictions(n=4):
     model.eval()
     images, masks = next(iter(test_loader))

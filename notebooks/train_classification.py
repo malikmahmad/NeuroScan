@@ -24,9 +24,6 @@ torch.cuda.manual_seed_all(SEED)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {DEVICE}")
 
-# -----------------------------------------------------------------------
-# Config
-# -----------------------------------------------------------------------
 KAGGLE_PATH = "/kaggle/input/brain-tumor-mri-dataset"
 DATA_ROOT   = KAGGLE_PATH if os.path.exists(KAGGLE_PATH) else "data"
 TRAIN_DIR   = os.path.join(DATA_ROOT, "Training")
@@ -44,9 +41,6 @@ for sub in ["weights", "figures", "metrics"]:
 
 assert os.path.exists(TRAIN_DIR), f"Training folder not found at {TRAIN_DIR}"
 
-# -----------------------------------------------------------------------
-# Data
-# -----------------------------------------------------------------------
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD  = [0.229, 0.224, 0.225]
 
@@ -86,7 +80,6 @@ test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False, num_wo
 
 print(f"Train: {len(train_ds)}  Val: {len(val_ds)}  Test: {len(test_ds)}")
 
-# Class distribution
 counts = {c: 0 for c in CLASS_NAMES}
 for _, label in full_train_ds.samples:
     counts[CLASS_NAMES[label]] += 1
@@ -100,9 +93,6 @@ plt.savefig(OUTPUT_DIR / "figures" / "class_distribution.png", dpi=150)
 plt.show()
 print(counts)
 
-# -----------------------------------------------------------------------
-# Models
-# -----------------------------------------------------------------------
 NUM_CLASSES = len(CLASS_NAMES)
 
 
@@ -148,9 +138,6 @@ MODEL_BUILDERS = {
     "vit":          build_vit,
 }
 
-# -----------------------------------------------------------------------
-# Train / eval
-# -----------------------------------------------------------------------
 
 def run_epoch(model, loader, criterion, optimizer=None):
     is_train = optimizer is not None
@@ -262,9 +249,6 @@ def evaluate_on_test(model, name):
     return result
 
 
-# -----------------------------------------------------------------------
-# Run
-# -----------------------------------------------------------------------
 all_results    = {}
 trained_models = {}
 
@@ -275,7 +259,6 @@ for model_name, builder in MODEL_BUILDERS.items():
     trained_models[model_name] = trained_model
     all_results[model_name]    = test_results
 
-# Comparison table
 import pandas as pd
 
 comparison = pd.DataFrame({

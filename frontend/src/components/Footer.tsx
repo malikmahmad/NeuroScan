@@ -34,7 +34,6 @@ export default function Footer() {
     <footer ref={ref} className={`site-footer reveal ${inView ? "is-visible" : ""}`}>
       <div className="site-footer__inner">
 
-        {/* Brand */}
         <div className="site-footer__brand">
           <div className="site-footer__logo-row">
             <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -55,13 +54,11 @@ export default function Footer() {
           <p>Comparative deep learning for brain tumor MRI — classification, segmentation, and explainability.</p>
         </div>
 
-        {/* Nav */}
         <nav className="site-footer__nav" aria-label="Footer navigation">
           <span className="site-footer__col-title">Pages</span>
           {NAV_LINKS.map((l) => <a key={l.href} href={l.href}>{l.label}</a>)}
         </nav>
 
-        {/* Author */}
         <div className="site-footer__author">
           <span className="site-footer__col-title">Built by</span>
           <span className="site-footer__name">Malik Muhammad Ahmad</span>

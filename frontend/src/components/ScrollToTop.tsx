@@ -26,7 +26,6 @@ export default function ScrollToTop() {
         aria-label="Back to top"
         title="Back to top"
       >
-        {/* Progress ring */}
         <svg className="scroll-top__ring" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
           <circle cx="22" cy="22" r="18" fill="none" stroke="var(--border-subtle)" strokeWidth="2" />
           <circle

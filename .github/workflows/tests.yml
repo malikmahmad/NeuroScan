@@ -36,7 +36,4 @@ jobs:
           fi
           exit $code
         env:
-          # Model-dependent tests should use pytest.mark.skipif or mock
-          # ModelRegistry rather than require real .pth files in CI —
-          # the checkpoints aren't committed to the repo.
           NEUROSCAN_CI: "1"

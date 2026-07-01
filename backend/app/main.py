@@ -66,8 +66,6 @@ def _read_image(upload: UploadFile) -> Image.Image:
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Could not open image: {exc}")
 
-    # Basic MRI plausibility: real scans are near-grayscale. High channel variance
-    # (>18.0 mean absolute diff) suggests a color photo — reject it.
     rgb = img.convert("RGB")
     arr = np.array(rgb, dtype=np.float32)
     r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]

@@ -1,16 +1,3 @@
-"""
-place_outputs.py
-
-After downloading the training outputs from Kaggle:
-  1. Download the "outputs" folder from the classification notebook
-  2. Download the "outputs_segmentation" folder from the segmentation notebook
-  3. Place both inside  notebooks/
-  4. Run:  python notebooks/place_outputs.py
-
-The script checks which files are present and copies any missing weights
-into backend/models/ automatically.
-"""
-
 import shutil
 from pathlib import Path
 

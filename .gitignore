@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+backend/venv311/
 *.egg-info/
 
 # Type checking / linting caches

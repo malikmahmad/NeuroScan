@@ -1,17 +1,3 @@
-"""
-Explainability figures: Grad-CAM for CNN/EfficientNet, Attention Rollout for ViT.
-
-Why two different methods?
-Grad-CAM works by computing gradients with respect to a convolutional feature
-map. ViT has no convolutional layers, so there is no spatial feature map to
-hook into — applying Grad-CAM to a transformer is technically incorrect.
-Attention Rollout (Abnar & Zuidema, 2020) is the right approach for ViT: it
-multiplies attention matrices across all encoder layers, tracking how much
-each input patch influenced the final classification token.
-
-Run this after train_classification.py. It expects the weights in outputs/weights/.
-"""
-
 import json
 import os
 from pathlib import Path
@@ -46,8 +32,6 @@ with open(OUTPUT_DIR / "metrics" / "cnn_test_results.json") as f:
 NUM_CLASSES = len(CLASS_NAMES)
 
 
-# --- Model loaders -----------------------------------------------------------
-
 def load_cnn():
     model = nn.Sequential(
         nn.Conv2d(3, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(), nn.MaxPool2d(2),
@@ -59,7 +43,6 @@ def load_cnn():
         nn.Linear(128, NUM_CLASSES),
     )
     model.load_state_dict(torch.load(OUTPUT_DIR / "weights" / "cnn_best.pth", map_location=DEVICE))
-    # Index 14 is the ReLU right after the last conv block, before the final pool.
     return model.to(DEVICE).eval(), model[14]
 
 
@@ -78,8 +61,6 @@ def load_vit():
     model.load_state_dict(torch.load(OUTPUT_DIR / "weights" / "vit_best.pth", map_location=DEVICE))
     return model.to(DEVICE).eval()
 
-
-# --- Grad-CAM ----------------------------------------------------------------
 
 class GradCAM:
     def __init__(self, model, target_layer):
@@ -111,15 +92,8 @@ class GradCAM:
         return cam, class_idx
 
 
-# --- Attention Rollout -------------------------------------------------------
-
 @torch.no_grad()
 def attention_rollout(model, input_tensor):
-    """
-    Aggregate self-attention across all ViT encoder layers.
-    The CLS token row of the final product tells us which patches the model
-    attended to — used as a spatial explanation map.
-    """
     handles = []
     captured = {}
 
@@ -156,8 +130,6 @@ def attention_rollout(model, input_tensor):
     cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
     return cam
 
-
-# --- Visualization -----------------------------------------------------------
 
 def blend_heatmap(pil_image, cam, alpha=0.45):
     cam_up = np.array(
@@ -203,8 +175,6 @@ def visualize(image_path, true_label):
     plt.show()
     print(f"Saved: {out_path}")
 
-
-# --- Run on one sample per class ---------------------------------------------
 
 KAGGLE_PATH = "/kaggle/input/brain-tumor-mri-dataset"
 DATA_ROOT = KAGGLE_PATH if os.path.exists(KAGGLE_PATH) else "data"

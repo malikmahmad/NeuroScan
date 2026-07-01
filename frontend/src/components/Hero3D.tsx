@@ -9,7 +9,6 @@ export default function Hero3D() {
     if (!container) return;
     const pref = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Use explicit fallbacks — container may not have layout yet on first paint
     const W = container.offsetWidth  || 500;
     const H = container.offsetHeight || 460;
 
@@ -38,7 +37,6 @@ export default function Hero3D() {
     const pH = 2.15;
     let   pW = pH * 1.33;
 
-    // Brain plane — visible once texture loads
     const brainMat = new THREE.MeshStandardMaterial({
       transparent:       true,
       opacity:           0,
@@ -64,13 +62,11 @@ export default function Hero3D() {
       },
       undefined,
       () => {
-        // Texture failed — show a plain emissive plane so something is visible
         brainMat.opacity = 0.6;
         brainMat.needsUpdate = true;
       }
     );
 
-    // Inner glow plane — behind the brain image
     const innerGlowMat = new THREE.MeshBasicMaterial({
       color: 0x004488, transparent: true, opacity: 0.20, depthWrite: false,
     });
@@ -81,7 +77,6 @@ export default function Hero3D() {
     innerGlow.position.z = -0.06;
     root.add(innerGlow);
 
-    // Outer ambient halo
     const outerHaloMesh = new THREE.Mesh(
       new THREE.PlaneGeometry(pW * 1.90, pH * 1.72),
       new THREE.MeshBasicMaterial({ color: 0x001e40, transparent: true, opacity: 0.09, depthWrite: false })
@@ -89,7 +84,6 @@ export default function Hero3D() {
     outerHaloMesh.position.z = -0.16;
     root.add(outerHaloMesh);
 
-    // MRI scan line — world-space so it stays horizontal
     const scanLineMat = new THREE.MeshBasicMaterial({
       color: 0x00e5ff, transparent: true, opacity: 0.48,
       side: THREE.DoubleSide, depthWrite: false,
@@ -110,7 +104,6 @@ export default function Hero3D() {
     );
     scene.add(scanGlowMesh);
 
-    // HUD corner brackets
     const bracketMat = new THREE.LineBasicMaterial({
       color: 0x00aadd, transparent: true, opacity: 0.42,
     });
@@ -132,7 +125,6 @@ export default function Hero3D() {
       ));
     });
 
-    // Diagnostic readout lines — right edge
     const readMat = new THREE.LineBasicMaterial({
       color: 0x007799, transparent: true, opacity: 0.32,
     });
@@ -154,7 +146,6 @@ export default function Hero3D() {
       root.add(dot);
     });
 
-    // Ambient particles
     const PARTICLE_COUNT = 75;
     const pBuf = new Float32Array(PARTICLE_COUNT * 3);
     type Particle = { x: number; y: number; z: number; vx: number; vy: number; ph: number };
@@ -175,7 +166,6 @@ export default function Hero3D() {
       opacity: 0.50, sizeAttenuation: true, depthWrite: false,
     })));
 
-    // Lights
     scene.add(new THREE.AmbientLight(0x0a1830, 6.5));
     const keyLight = new THREE.DirectionalLight(0x4488aa, 3.8);
     keyLight.position.set(2, 3, 5);
@@ -187,7 +177,6 @@ export default function Hero3D() {
     rimLight.position.set(0, -2, -4);
     scene.add(rimLight);
 
-    // Animation
     let t = 0;
     let scanT = 0;
     let animId: number;

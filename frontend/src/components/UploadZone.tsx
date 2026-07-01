@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface Props {
   onFileSelected: (file: File) => void;
   disabled?: boolean;
-  reset?: number; // increment this to clear the zone
+  reset?: number;
 }
 
 export default function UploadZone({ onFileSelected, disabled, reset }: Props) {
@@ -11,7 +11,6 @@ export default function UploadZone({ onFileSelected, disabled, reset }: Props) {
   const [fileName, setFileName]     = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Clear filename and input value whenever parent signals a reset
   useEffect(() => {
     if (reset === undefined) return;
     setFileName(null);

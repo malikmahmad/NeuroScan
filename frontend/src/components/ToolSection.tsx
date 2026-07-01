@@ -22,7 +22,7 @@ export default function ToolSection() {
   const [imageUrl, setImageUrl]                 = useState<string | null>(null);
   const [analyzing, setAnalyzing]               = useState(false);
   const [error, setError]                       = useState<string | null>(null);
-  const [uploadKey, setUploadKey]               = useState(0); // increment to reset UploadZone
+  const [uploadKey, setUploadKey]               = useState(0);
 
   const [singleResult, setSingleResult] = useState<{
     classification: ClassifyResult;
@@ -169,7 +169,6 @@ export default function ToolSection() {
         }
         .tool__header h2 { font-size: 26px; margin-top: var(--space-3); color: var(--text-primary); }
 
-        /* Live badge */
         .tool__live-badge {
           display: flex; align-items: center; gap: 6px;
           font-size: 11.5px; color: var(--text-tertiary);
@@ -183,10 +182,8 @@ export default function ToolSection() {
         .tool__live-badge--off { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.3); }
         .tool__live-badge--off .tool__live-dot { background: var(--danger); }
 
-        /* Panel */
         .tool__panel { display: flex; flex-direction: column; gap: var(--space-5); }
 
-        /* Mode toggle */
         .mode-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
         .mode-toggle {
           display: inline-flex; background: var(--bg-panel);
@@ -203,7 +200,6 @@ export default function ToolSection() {
           box-shadow: 0 1px 6px rgba(var(--accent-teal-rgb), 0.2);
         }
 
-        /* Model select */
         .model-select { display: inline-flex; gap: var(--space-2); flex-wrap: wrap; }
         .model-select__btn {
           background: var(--bg-panel); border: 1px solid var(--border-subtle);
@@ -221,12 +217,10 @@ export default function ToolSection() {
         }
         .model-select__btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-        /* Banners */
         .banner { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); font-size: 13px; line-height: 1.5; }
         .banner--warn  { background: var(--accent-amber-bg); color: var(--accent-amber); border: 1px solid rgba(var(--accent-amber-rgb), 0.3); }
         .banner--error { background: rgba(var(--danger-rgb), 0.1); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
 
-        /* Loading card */
         .loading-card {
           display: flex; align-items: center; gap: var(--space-3);
           padding: var(--space-4) var(--space-5);

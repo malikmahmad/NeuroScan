@@ -37,7 +37,7 @@ segment_transform = transforms.Compose(
 
 
 class WeightsNotFoundError(RuntimeError):
-    """Raised when a .pth checkpoint is missing from backend/models/."""
+    pass
 
 
 def _load_checkpoint(model: torch.nn.Module, filename: str) -> torch.nn.Module:
@@ -54,18 +54,11 @@ def _load_checkpoint(model: torch.nn.Module, filename: str) -> torch.nn.Module:
 
 
 class ModelRegistry:
-    """
-    Lazy-loads each model on first use and keeps it resident in memory.
-    status() lets the frontend know which checkpoints are present so it
-    can disable unavailable options rather than surface a runtime error.
-    """
-
     def __init__(self):
         self._cnn = None
         self._efficientnet = None
         self._vit = None
         self._unet = None
-        # GradCAM instances cached here so hooks are only registered once
         self._cnn_gradcam = None
         self._eff_gradcam = None
 
@@ -128,7 +121,6 @@ def _pil_to_b64(image: Image.Image) -> str:
 
 
 def _cnn_target_layer(model):
-    # Index 14 = ReLU after the last conv block, just before AdaptiveAvgPool.
     return model[14]
 
 
@@ -203,7 +195,6 @@ def classify(
 
 
 def classify_ensemble(image: Image.Image) -> dict:
-    """Run every available classifier and combine their probabilities."""
     available = [
         name
         for name, ready in registry.status().items()
@@ -237,7 +228,6 @@ def classify_ensemble(image: Image.Image) -> dict:
 
 
 def segment(image: Image.Image) -> dict:
-    """Run U-Net segmentation and return a binary mask plus a blended overlay."""
     model = registry.unet
     input_tensor = segment_transform(image.convert("RGB")).unsqueeze(0).to(DEVICE)
 
@@ -261,7 +251,6 @@ def segment(image: Image.Image) -> dict:
 
 
 def full_analysis(image: Image.Image, classifier: str = "efficientnet") -> dict:
-    """Classify the scan, then run segmentation if a tumor class is predicted."""
     classification = classify(image, model_name=classifier, explain=True)
     result = {"classification": classification}
 
