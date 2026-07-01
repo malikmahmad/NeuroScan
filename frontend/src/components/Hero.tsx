@@ -1,10 +1,10 @@
 import { Suspense, lazy } from "react";
 import { useInView } from "../hooks/useInView";
 
-const Hero3D = lazy(() => import("./Hero3D"));
+const ComparativeNetworkPanel = lazy(() => import("./ComparativeNetworkPanel"));
 
 export default function Hero() {
-  const { ref: textRef, inView: textVisible } = useInView<HTMLDivElement>({ threshold: 0.1 });
+  const { ref: textRef,   inView: textVisible   } = useInView<HTMLDivElement>({ threshold: 0.1 });
   const { ref: visualRef, inView: visualVisible } = useInView<HTMLDivElement>({ threshold: 0.1 });
 
   return (
@@ -35,17 +35,23 @@ export default function Hero() {
         className={`reveal-right ${visualVisible ? "is-visible" : ""}`}
         style={{ transitionDelay: "0.15s" }}
       >
-        <Suspense fallback={<div className="hero-3d hero-3d--loading" />}>
-          <Hero3D />
+        <Suspense fallback={<div className="hero-panel-loading" />}>
+          <ComparativeNetworkPanel />
         </Suspense>
       </div>
 
       <style>{`
         .hero {
           max-width: 1400px; margin: 0 auto;
-          padding: var(--space-6) var(--space-5) var(--space-7);
-          display: grid; grid-template-columns: 1.1fr 0.9fr;
-          align-items: center; gap: var(--space-6);
+          padding: clamp(56px, 7vw, 88px) clamp(20px, 4vw, 40px) clamp(48px, 6vw, 72px);
+          display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.9fr);
+          align-items: center; gap: clamp(24px, 3vw, 40px);
+          overflow: hidden;
+        }
+        .hero > div:last-child {
+          min-width: 0;
+          justify-self: center;
+          width: 100%;
         }
         .hero__eyebrow {
           display: inline-block; font-size: 12px; letter-spacing: 0.06em;
@@ -66,7 +72,7 @@ export default function Hero() {
         }
         .hero__subhead {
           margin: var(--space-4) 0 0; font-size: 15.5px; line-height: 1.6;
-          color: var(--text-secondary); max-width: 580px;
+          color: var(--text-secondary); max-width: 560px;
         }
         .hero__actions { display: flex; gap: var(--space-3); margin-top: var(--space-6); flex-wrap: wrap; }
         .hero__btn {
@@ -98,12 +104,14 @@ export default function Hero() {
           transform: translateY(-3px) scale(1.02);
           box-shadow: 0 6px 20px rgba(var(--accent-teal-rgb), 0.2);
         }
-        .hero-3d { width: 100%; height: 460px; }
-        .hero-3d--loading { border-radius: var(--radius-lg); background: radial-gradient(circle, var(--accent-teal-bg), transparent 70%); }
+        .hero-panel-loading {
+          width: 100%; min-height: 360px;
+          background: radial-gradient(circle, var(--accent-teal-bg), transparent 70%);
+          border-radius: var(--radius-lg);
+        }
         @media (max-width: 860px) {
           .hero { grid-template-columns: 1fr; padding-top: var(--space-7); }
           .hero h1 { font-size: 30px; }
-          .hero-3d { height: 320px; order: -1; }
           .hero__subhead { max-width: 100%; }
         }
         @media (max-width: 420px) {

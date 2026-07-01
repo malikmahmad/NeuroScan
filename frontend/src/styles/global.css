@@ -66,6 +66,8 @@ html { scroll-behavior: smooth; }
 html, body {
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   background-color: var(--bg-canvas);
   background-image:
     radial-gradient(ellipse 70% 45% at 50% -5%, var(--hero-glow), transparent),
@@ -79,7 +81,10 @@ html, body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-#root { min-height: 100vh; }
+#root {
+  min-height: 100vh;
+  overflow: hidden;
+}
 
 h1, h2, h3 {
   font-family: var(--font-display);
