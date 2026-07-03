@@ -29,3 +29,7 @@ frontend/.env
 
 # OS
 .DS_Store
+
+# Project files not for GitHub
+cover.html
+NEUROSCAN_ARTICLE.md

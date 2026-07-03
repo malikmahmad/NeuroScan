@@ -1,5 +1,9 @@
 # NeuroScan
 
+<div align="center">
+
+![NeuroScan Cover](docs/neuroscan_cover.png)
+
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.10+-EE4C2C.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/malikmahmad/neuroscan/blob/main/LICENSE)
@@ -8,29 +12,54 @@
 [![Quality](https://github.com/malikmahmad/neuroscan/actions/workflows/quality.yml/badge.svg)](https://github.com/malikmahmad/neuroscan/actions/workflows/quality.yml)
 [![Tests](https://github.com/malikmahmad/neuroscan/actions/workflows/tests.yml/badge.svg)](https://github.com/malikmahmad/neuroscan/actions/workflows/tests.yml)
 
+**A brain tumor MRI analysis system that classifies, segments, and explains its own predictions**
+
+*Built to answer: How does a CNN trained from scratch compare to EfficientNet and Vision Transformer when all three see the exact same data?*
+
+[Features](#what-it-does) • [Results](#results) • [Getting Started](#getting-started) • [Documentation](#api-reference)
+
+</div>
+
+---
+
+---
+
+## Overview
+
 A brain tumor MRI system that classifies, segments, and explains its own predictions — built to find out, with real numbers instead of assumptions, how a CNN trained from scratch actually compares to a transfer-learned EfficientNet and a transfer-learned Vision Transformer when all three see the exact same data.
 
-Most projects in this space train one model, report its accuracy, and stop. This one trains three architecturally different models under identical conditions, segments the tumor with a U-Net when one is found, and uses a different explainability method for the transformer than for the CNNs — because the usual one (Grad-CAM) doesn't actually apply to transformers, and a lot of public repos use it anyway.
+### Why This Project Exists
+
+Most projects in this space train one model, report its accuracy, and stop. This one trains **three architecturally different models under identical conditions**, segments the tumor with a U-Net when one is found, and uses a different explainability method for the transformer than for the CNNs — because the usual one (Grad-CAM) doesn't actually apply to transformers, and a lot of public repos use it anyway.
 
 > **Research and educational project** — not a medical device. See [Limitations](#known-limitations).
 
+### Key Differentiators
+
+- ✅ **Controlled comparison** — same data split, same augmentation, same training duration
+- ✅ **Clinical validation** — U-Net segmentation (Dice 0.886), not just classification
+- ✅ **Honest explainability** — Grad-CAM for CNNs, Attention Rollout for ViT
+- ✅ **Production-ready** — FastAPI backend, React frontend, Docker deployment, 17 tests
+- ✅ **Fully reproducible** — metrics read live from training output JSON files
+
 ## Table of Contents
 
-- [What it does](#what-it-does)
-- [Why a controlled comparison](#why-a-controlled-comparison)
+- [Overview](#overview)
+- [What It Does](#what-it-does)
+- [Why a Controlled Comparison](#why-a-controlled-comparison)
 - [Results](#results)
-- [Explainability: Grad-CAM vs. Attention Rollout](#explainability-grad-cam-vs-attention-rollout)
+- [Explainability](#explainability-grad-cam-vs-attention-rollout)
 - [Pipeline](#pipeline)
-- [Project structure](#project-structure)
-- [Getting started](#getting-started)
-- [API reference](#api-reference)
+- [Quick Start](#quick-start)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [API Reference](#api-reference)
 - [Datasets](#datasets)
-- [Known limitations](#known-limitations)
-- [Disclaimer](#disclaimer)
+- [Known Limitations](#known-limitations)
+- [Contributing](#contributing)
 - [Citation](#citation)
 - [Author](#author)
 - [License](#license)
-- [Acknowledgements](#acknowledgements)
 
 ## What it does
 
@@ -108,12 +137,12 @@ CNN and EfficientNet-B0 use Grad-CAM (`backend/app/gradcam.py:GradCAM`). ViT-B/1
 ```
                          ┌─────────────────────────┐
                          │  React + TS frontend     │
-                         │  (upload, results UI)    │
+                         │  Upload • Results UI     │
                          └────────────┬─────────────┘
                                       │ multipart/form-data
                          ┌────────────▼─────────────┐
                          │   FastAPI backend         │
-                         │   MRI plausibility check  │  ← rejects non-grayscale images
+                         │   MRI plausibility check  │  ← rejects non-grayscale
                          └────────────┬─────────────┘
                                       │
                   ┌───────────────────┼───────────────────┐
@@ -129,18 +158,40 @@ CNN and EfficientNet-B0 use Grad-CAM (`backend/app/gradcam.py:GradCAM`). ViT-B/1
                          tumor class predicted?
                               │ yes        │ no
                               ▼            ▼
-                       ┌────────────┐   notumor → done
+                       ┌────────────┐   no tumor → done
                        │  U-Net     │
                        │  segment   │
                        └────────────┘
                               │
                               ▼
-                    JSON response: class, confidence,
-                    explainability overlay (base64 PNG),
-                    segmentation mask (if applicable)
+                    JSON: class, confidence,
+                    explainability (base64 PNG),
+                    segmentation mask (if tumor)
 ```
 
-`/api/classify/compare` skips the branching above and just runs all three classifiers, returning each one's result plus an averaged-probability ensemble.
+`/api/classify/compare` runs all three classifiers, returning each result plus an averaged-probability ensemble.
+
+---
+
+## Quick Start
+
+```bash
+# 1. Clone repository
+git clone https://github.com/malikmahmad/neuroscan.git
+cd neuroscan
+
+# 2. Start with Docker (easiest)
+docker-compose up
+
+# 3. Access the app
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
+
+**Note:** Model weights must be trained separately (see [Getting Started](#getting-started)). Docker starts the infrastructure, but you need `.pth` files in `backend/models/`.
+
+---
 
 ## Project structure
 
@@ -268,15 +319,40 @@ The classification dataset's documentation notes that the SARTAJ-sourced glioma 
 
 Worth knowing before you build on this:
 
-1. ~~**GradCAM hooks accumulate on a long-running server.**~~ Fixed — `GradCAM` is now a cached property on `ModelRegistry` (`cnn_gradcam`, `efficientnet_gradcam`), so hooks register once per model and stay registered for the process lifetime instead of accumulating on every `classify()` call.
+1. ~~**GradCAM hooks accumulate on a long-running server.**~~ ✅ **Fixed** — `GradCAM` is now a cached property on `ModelRegistry`, so hooks register once per model and stay registered for the process lifetime instead of accumulating.
 2. **The MRI validation is a heuristic, not a real input validator.** It checks mean RGB channel difference and rejects anything over ~18. A desaturated color photo would sail right through. It catches the obvious case (someone uploads a random JPEG) and nothing more.
-3. **Docker's frontend service runs `npm run dev`.** That's Vite's dev server, meant for local development. Deploying this for real means `npm run build` served through nginx or similar, not the dev server.
-4. ~~**`requirements.txt` uses loose version bounds.**~~ Fixed — pinned to exact versions (`torch==2.12.1`, `fastapi==0.138.1`, and so on) rather than lower-bound ranges.
-5. ~~**`gradcam.py` calls the deprecated `matplotlib.cm.get_cmap("jet")`.**~~ Fixed — now uses `matplotlib.colormaps["jet"]`.
-6. ~~**There are no automated tests.**~~ Fixed — `backend/tests/` now has 17 passing pytest tests covering model output shapes, GradCAM caching, the `WeightsNotFoundError` path, and the MRI channel check. None require `.pth` checkpoints to run.
+3. **Docker's frontend service runs `npm run dev`.** That's Vite's dev server, meant for local development. Deploying this for real means `npm run build` served through nginx or similar.
+4. ~~**`requirements.txt` uses loose version bounds.**~~ ✅ **Fixed** — pinned to exact versions (`torch==2.12.1`, `fastapi==0.138.1`, etc.).
+5. ~~**`gradcam.py` calls the deprecated `matplotlib.cm.get_cmap("jet")`.**~~ ✅ **Fixed** — now uses `matplotlib.colormaps["jet"]`.
+6. ~~**There are no automated tests.**~~ ✅ **Fixed** — `backend/tests/` now has 17 passing pytest tests covering model output shapes, GradCAM caching, error paths, and MRI validation.
 7. **CORS is wide open** (`allow_origins=["*"]`). Fine for a research tool nobody's deploying publicly with real user data; not fine to copy-paste into something that is.
 
 Beyond the code itself: the ensemble mode (`/api/classify/compare`) is fully implemented and was exercised informally during development, but no aggregate accuracy across the full test set has actually been measured for it. There's no number reported here for ensemble accuracy because one hasn't been computed — see the paper's Future Work section.
+
+---
+
+## Contributing
+
+We welcome contributions! Here's how you can help:
+
+### Areas for Contribution
+
+- **Code:** Bug fixes, new architectures (ResNet, DenseNet), mobile deployment (ONNX, TFLite)
+- **Documentation:** Tutorials, deployment guides, translations
+- **Research:** Ensemble validation, 3D volumetric analysis, cross-dataset validation
+- **Testing:** Edge cases, clinical validation with radiologists, performance benchmarks
+
+### How to Contribute
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes following code standards (PEP 8, type hints, tests)
+4. Add tests for new features
+5. Submit a pull request with a detailed description
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for complete guidelines.
+
+---
 
 ## Disclaimer
 
