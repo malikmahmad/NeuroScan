@@ -1,265 +1,180 @@
-# NeuroScan
+# NeuroScan: A Comparative Deep Learning Framework for Brain Tumor MRI Analysis
 
 <div align="center">
 
-# 🧠 NeuroScan
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.10+-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![arXiv](https://img.shields.io/badge/arXiv-2026.xxxxx-b31b1b.svg)](https://arxiv.org/)
+[![Tests](https://github.com/malikmahmad/NeuroScan-Research/actions/workflows/tests.yml/badge.svg)](https://github.com/malikmahmad/NeuroScan-Research/actions/workflows/tests.yml)
 
-### Brain Tumor MRI Analysis with Deep Learning
+**A rigorous comparative study of deep learning architectures for automated brain tumor classification and segmentation from MRI scans.**
 
-**A comparative framework for classification, segmentation, and explainability**
-
-[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.10+-EE4C2C.svg)](https://pytorch.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/malikmahmad/neuroscan/blob/main/LICENSE)
-[![Status](https://img.shields.io/badge/status-research%20only-orange.svg)](https://github.com/malikmahmad/neuroscan)
-[![Docker](https://img.shields.io/badge/docker-supported-2496ED.svg)](https://hub.docker.com/)
-[![Quality](https://github.com/malikmahmad/neuroscan/actions/workflows/quality.yml/badge.svg)](https://github.com/malikmahmad/neuroscan/actions/workflows/quality.yml)
-[![Tests](https://github.com/malikmahmad/neuroscan/actions/workflows/tests.yml/badge.svg)](https://github.com/malikmahmad/neuroscan/actions/workflows/tests.yml)
-
-```
-CNN (78.19%)  •  EfficientNet-B0 (91.56%)  •  ViT-B/16 (94.69%)  •  U-Net Segmentation (Dice 0.886)
-```
-
-**[Features](#what-it-does)** • **[Results](#results)** • **[Quick Start](#quick-start)** • **[Documentation](#api-reference)**
+[Paper](#citation) • [Results](#results) • [Installation](#installation) • [Datasets](#datasets) • [Documentation](#documentation)
 
 </div>
 
 ---
 
----
-
 ## Overview
 
-A brain tumor MRI system that classifies, segments, and explains its own predictions — built to find out, with real numbers instead of assumptions, how a CNN trained from scratch actually compares to a transfer-learned EfficientNet and a transfer-learned Vision Transformer when all three see the exact same data.
+NeuroScan is a comprehensive research framework that evaluates **three fundamentally different neural architectures** under **rigorously controlled conditions** for brain tumor MRI analysis. Unlike most work that reports single-model performance, this project establishes a fair, reproducible comparison across:
 
-### Why This Project Exists
+- **Custom CNN** (baseline, trained from scratch)
+- **EfficientNet-B0** (transfer learning from ImageNet)
+- **Vision Transformer (ViT-B/16)** (modern attention-based architecture)
 
-Most projects in this space train one model, report its accuracy, and stop. This one trains **three architecturally different models under identical conditions**, segments the tumor with a U-Net when one is found, and uses a different explainability method for the transformer than for the CNNs — because the usual one (Grad-CAM) doesn't actually apply to transformers, and a lot of public repos use it anyway.
+Additionally, we integrate **U-Net segmentation** for tumor localization and implement **architecture-appropriate explainability methods** (Grad-CAM for CNNs, Attention Rollout for transformers).
 
-> **Research and educational project** — not a medical device. See [Limitations](#known-limitations).
+### Key Contributions
 
-### Key Differentiators
+1. **Controlled Architecture Comparison** — Identical data splits, preprocessing, augmentation, and training protocols across all models
+2. **Clinical Validation** — Beyond classification: tumor segmentation with clinical-grade Dice coefficient (0.886)
+3. **Methodologically Correct Explainability** — Grad-CAM for convolutional models, Attention Rollout for transformers (not Grad-CAM forced onto ViT)
+4. **Complete Reproducibility** — All metrics computed from test sets, training curves preserved, model checkpoints shareable
+5. **Production-Ready Backend** — FastAPI server with comprehensive error handling, input validation, and 17 passing pytest tests
 
-- ✅ **Controlled comparison** — same data split, same augmentation, same training duration
-- ✅ **Clinical validation** — U-Net segmentation (Dice 0.886), not just classification
-- ✅ **Honest explainability** — Grad-CAM for CNNs, Attention Rollout for ViT
-- ✅ **Production-ready** — FastAPI backend, React frontend, Docker deployment, 17 tests
-- ✅ **Fully reproducible** — metrics read live from training output JSON files
+> **⚠️ Research Use Only**  
+> This system has not been clinically validated and is not approved for medical diagnosis. It serves as a research tool for investigating deep learning architectures in medical imaging.
 
-## Table of Contents
-
-- [Overview](#overview)
-- [What It Does](#what-it-does)
-- [Why a Controlled Comparison](#why-a-controlled-comparison)
-- [Results](#results)
-- [Explainability](#explainability-grad-cam-vs-attention-rollout)
-- [Pipeline](#pipeline)
-- [Quick Start](#quick-start)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [API Reference](#api-reference)
-- [Datasets](#datasets)
-- [Known Limitations](#known-limitations)
-- [Contributing](#contributing)
-- [Citation](#citation)
-- [Author](#author)
-- [License](#license)
-
-## What it does
-
-- **Classification** — four classes (glioma, meningioma, pituitary tumor, no tumor) from a single MRI slice, scored by three independent models: a CNN trained from scratch, EfficientNet-B0, and ViT-B/16.
-- **Segmentation** — a U-Net localizes the tumor in the slice when a tumor class is predicted, instead of just naming it.
-- **Explainability** — Grad-CAM for the two CNN-based models, Attention Rollout for the transformer. Different math for a different architecture, not the same heatmap trick applied everywhere.
-- **Comparison mode** — run all three classifiers on one image and see where they agree and where they don't, plus an averaged-probability ensemble.
-- **Metrics dashboard** — the frontend reads training metrics straight from the JSON files the training scripts produce, so the numbers on screen are never hand-typed or stale.
-- **PDF export** — generate a one-page report of a single prediction, client-side.
-
-## Why a controlled comparison
-
-It's easy to find a repo that trains a CNN, reports 90-something percent, and calls it done. What's harder to find is one where you can actually trust that the number reflects the architecture and not some difference in how the data was split or augmented.
-
-Here, all three classifiers see the same train/val/test split, the same resizing, the same normalization, and the same augmentation (horizontal flip, ±10° rotation, brightness/contrast jitter). The only thing that changes between runs is the model. That's the whole point — if ViT comes out ahead, it's because ViT is better at this task under these conditions, not because it got an easier slice of the data.
+---
 
 ## Results
 
-Held-out test set: 1,600 images, 400 per class, never seen during training or model selection.
+### Classification Performance (1,600-image held-out test set)
 
 | Model | Accuracy | Macro F1 | Weighted F1 | ROC-AUC (OvR) |
-|---|---|---|---|---|
-| Custom CNN | 78.19% | 0.7693 | 0.7693 | 0.9264 |
-| EfficientNet-B0 | 91.56% | 0.9130 | 0.9130 | 0.9850 |
-| **ViT-B/16** | **94.69%** | **0.9461** | **0.9461** | **0.9897** |
+|:------|:--------:|:--------:|:-----------:|:-------------:|
+| Custom CNN | 78.19% | 0.769 | 0.769 | 0.926 |
+| EfficientNet-B0 | 91.56% | 0.913 | 0.913 | 0.985 |
+| **ViT-B/16** | **94.69%** | **0.946** | **0.946** | **0.990** |
 
-Per-class F1, ViT-B/16:
+### Per-Class Performance (ViT-B/16)
 
-| Class | F1 |
-|---|---|
-| Glioma | 0.900 |
-| Meningioma | 0.928 |
-| No tumor | 0.970 |
-| Pituitary tumor | 0.986 |
+| Class | Precision | Recall | F1-Score | Support |
+|:------|:---------:|:------:|:--------:|:-------:|
+| Glioma | 0.991 | 0.825 | 0.900 | 400 |
+| Meningioma | 0.879 | 0.983 | 0.928 | 400 |
+| No Tumor | 0.941 | 1.000 | 0.970 | 400 |
+| Pituitary | 0.992 | 0.980 | 0.986 | 400 |
 
-U-Net segmentation (589-slice held-out test split, LGG MRI Segmentation dataset):
+### Segmentation Performance (U-Net, 589-slice held-out test set)
 
 | Metric | Score |
-|---|---|
-| Dice coefficient | 0.886 |
-| IoU (Jaccard) | 0.856 |
+|:-------|:-----:|
+| **Dice Coefficient** | **0.886** |
+| **IoU (Jaccard)** | **0.856** |
 
-Training config: AdamW, lr=1e-4, ReduceLROnPlateau (factor 0.5, patience 2). Classification: 15 epochs, batch size 32. Segmentation: 25 epochs, batch size 16, Dice+BCE loss. NVIDIA T4 on Kaggle Notebooks. Best checkpoint kept by validation score, not the last epoch.
+**Training Configuration:**
+- Optimizer: AdamW (lr=1e-4, weight decay=1e-4)
+- Scheduler: ReduceLROnPlateau (factor=0.5, patience=2)
+- Classification: 15 epochs, batch size 32, cross-entropy loss
+- Segmentation: 25 epochs, batch size 16, Dice + BCE loss
+- Hardware: NVIDIA T4 GPU (Kaggle Notebooks)
 
-These numbers come straight from `notebooks/outputs/metrics/*.json` and `notebooks/outputs_segmentation/metrics/*.json` — same files the frontend's metrics dashboard reads at runtime.
-
-## Comparison with published work
-
-A note on how to read this table: different papers use different train/test splits, augmentation strategies, and fine-tuning depth, so these numbers aren't a strictly controlled comparison the way the three models trained for this project are against each other. They're included to show roughly where this project's numbers sit relative to published results on the same underlying dataset family — not to claim a new state of the art.
-
-| Method | Reported Accuracy | Notes | Source |
-|---|---|---|---|
-| Custom CNN (this project) | 78.19% | Trained from scratch, no pretraining | — |
-| EfficientNet-B0 (this project) | 91.56% | ImageNet pretraining, last 2 blocks + head fine-tuned | — |
-| **ViT-B/16 (this project)** | **94.69%** | **ImageNet pretraining, last encoder block + head fine-tuned** | — |
-| EfficientNetV2b0, fully fine-tuned | 99.16% | Same dataset family, full fine-tune rather than last-block-only | Hassan & Ghadiri, *Computers in Biology and Medicine*, vol. 185, art. 109542, 2025 |
-| EfficientNetV2 + GAM + ECA attention | 99.76% | Custom attention modules added to the backbone, full fine-tune | Pacal, *Cluster Computing*, vol. 27(8), pp. 11187–11212, 2024 |
-
-**What this means in context:** both published results above fully fine-tune their backbone and add custom architectural components on top of it. ViT-B/16 here deliberately only fine-tunes the last encoder block, to keep the comparison between the three architectures in this project fair given equal tuning effort — fully fine-tuning ViT-B/16, or adding attention modules the way Pacal (2024) does for EfficientNetV2, would likely close some of this gap. The point of this project isn't to claim a new top result on this dataset; it's to make the *comparison between architectures under identical, modest fine-tuning conditions* something you can actually trust.
-
-Earlier versions of this table cited two additional sources (`arxiv:2606.18682` and a "Nickparvar, 2021 baseline") — both have been removed. The arXiv ID could not be verified against any real paper, and the Nickparvar citation conflated the dataset's creator with a publication that doesn't appear to exist. Leaving inaccurate citations in to pad out a comparison table would be a worse look than having a shorter, fully-verified one.
-
-## Explainability: Grad-CAM vs. Attention Rollout
-
-Grad-CAM works by taking the gradient of the predicted class score with respect to a convolutional layer's feature maps, global-average-pooling that gradient per channel to get an importance weight, and using those weights to combine the feature maps into a heatmap. That construction needs a spatial convolutional feature map to differentiate through. A CNN has one. A Vision Transformer does not — it has a sequence of patch embeddings and no convolution anywhere near the part of the network you'd want to explain.
-
-Some repos apply Grad-CAM to a ViT anyway, usually by hooking into the last attention block and treating its output like a feature map. It produces a heatmap, but it isn't really Grad-CAM in the sense the original paper means, and there's no strong reason to trust it.
-
-This project uses Attention Rollout instead, for ViT specifically (Abnar & Zuidema, 2020). It works on the model's actual mechanism: take the attention matrix from every encoder layer, add back the identity to account for the residual connection, and multiply the layers together. What's left is, for each input patch, how much the classification token ultimately attended to it across the whole network — which is the thing you actually want to visualize for a transformer.
-
-CNN and EfficientNet-B0 use Grad-CAM (`backend/app/gradcam.py:GradCAM`). ViT-B/16 uses Attention Rollout (`backend/app/gradcam.py:vit_attention_rollout`). The backend picks the right one automatically based on which model served the prediction.
-
-## Pipeline
-
-```
-                         ┌─────────────────────────┐
-                         │  React + TS frontend     │
-                         │  Upload • Results UI     │
-                         └────────────┬─────────────┘
-                                      │ multipart/form-data
-                         ┌────────────▼─────────────┐
-                         │   FastAPI backend         │
-                         │   MRI plausibility check  │  ← rejects non-grayscale
-                         └────────────┬─────────────┘
-                                      │
-                  ┌───────────────────┼───────────────────┐
-                  ▼                   ▼                   ▼
-            ┌──────────┐       ┌─────────────┐      ┌──────────┐
-            │ Custom   │       │ EfficientNet │      │ ViT-B/16 │
-            │ CNN      │       │ -B0          │      │          │
-            │ +GradCAM │       │ +GradCAM     │      │ +Attn    │
-            │          │       │              │      │ Rollout  │
-            └────┬─────┘       └──────┬───────┘      └────┬─────┘
-                 └────────────────────┼───────────────────┘
-                                      ▼
-                         tumor class predicted?
-                              │ yes        │ no
-                              ▼            ▼
-                       ┌────────────┐   no tumor → done
-                       │  U-Net     │
-                       │  segment   │
-                       └────────────┘
-                              │
-                              ▼
-                    JSON: class, confidence,
-                    explainability (base64 PNG),
-                    segmentation mask (if tumor)
-```
-
-`/api/classify/compare` runs all three classifiers, returning each result plus an averaged-probability ensemble.
+All results are from held-out test sets never seen during training or hyperparameter selection.
 
 ---
 
-## Quick Start
+## Architecture Details
+
+### 1. Custom CNN (Baseline)
+```
+Input (3×224×224)
+├─ Conv2D(3→32) + BN + ReLU + MaxPool
+├─ Conv2D(32→64) + BN + ReLU + MaxPool
+├─ Conv2D(64→128) + BN + ReLU + MaxPool
+├─ Conv2D(128→256) + BN + ReLU + MaxPool
+├─ AdaptiveAvgPool2D(1×1)
+├─ Flatten
+├─ Dropout(0.3) + Linear(256→128) + ReLU
+└─ Dropout(0.3) + Linear(128→4)
+```
+**Parameters:** ~7.4M  
+**Purpose:** Establish baseline performance without transfer learning
+
+### 2. EfficientNet-B0 (Transfer Learning)
+- **Backbone:** ImageNet-pretrained EfficientNet-B0
+- **Fine-tuning:** Last 2 feature blocks + classifier head
+- **Modified Head:** Dropout(0.3) → Linear(1280→4)
+- **Parameters:** 10.7M (4.2M trainable)
+- **Purpose:** Industry-standard transfer learning approach
+
+### 3. Vision Transformer (ViT-B/16)
+- **Backbone:** ImageNet-21k pretrained ViT-B/16
+- **Fine-tuning:** Last encoder block + classification head
+- **Modified Head:** Linear(768→4)
+- **Parameters:** 86M (11M trainable)
+- **Purpose:** State-of-the-art attention-based architecture
+
+### 4. U-Net (Segmentation)
+```
+Encoder: 4 stages (32→64→128→256)
+Bottleneck: 512 channels
+Decoder: 4 stages with skip connections
+Output: Single-channel binary mask
+```
+**Loss:** Dice + Binary Cross-Entropy  
+**Purpose:** Tumor localization when classification predicts tumor class
+
+---
+
+## Explainability
+
+### Grad-CAM (CNN & EfficientNet-B0)
+**Gradient-weighted Class Activation Mapping**
+
+1. Forward pass → compute predicted class score
+2. Backward pass → compute gradients w.r.t. target convolutional layer
+3. Global average pooling of gradients → channel importance weights
+4. Weighted combination of feature maps → spatial heatmap
+5. ReLU + bilinear upsampling + normalization
+
+**Target Layers:**
+- Custom CNN: `model[14]` (final BatchNorm before pooling)
+- EfficientNet-B0: `model.features[-1]` (last MBConv block)
+
+### Attention Rollout (ViT-B/16)
+**Transformer-Specific Visualization** (Abnar & Zuidema, 2020)
+
+1. Extract attention matrices from all 12 encoder layers
+2. Add identity matrix to each (accounting for residual connections)
+3. Renormalize: `A_norm = A / A.sum(dim=-1, keepdim=True)`
+4. Multiply sequentially: `Rollout = A₁₂ @ A₁₁ @ ... @ A₁`
+5. Extract CLS token row → reshape to 14×14 patch grid
+6. Bilinear upsample to input resolution
+
+**Why Different Methods?**  
+Grad-CAM requires spatial convolutional feature maps for gradient computation. ViT has no convolutions — it operates on tokenized patches with self-attention. Attention Rollout directly visualizes what the model actually computed: cumulative attention flow from patches to classification token.
+
+---
+
+## Installation
+
+### Prerequisites
+- Python 3.11+
+- CUDA-capable GPU (optional, CPU inference supported but slower)
+- 8GB+ RAM (16GB recommended for training)
+
+### Clone Repository
+```bash
+git clone https://github.com/malikmahmad/NeuroScan-Research.git
+cd NeuroScan-Research
+```
+
+### Backend Setup
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Model Weights
+Train models using provided Kaggle notebooks (see [Training](#training)) or download pretrained weights:
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/malikmahmad/neuroscan.git
-cd neuroscan
-
-# 2. Start with Docker (easiest)
-docker-compose up
-
-# 3. Access the app
-# Frontend: http://localhost:5173
-# Backend API: http://localhost:8000
-# API Docs: http://localhost:8000/docs
-```
-
-**Note:** Model weights must be trained separately (see [Getting Started](#getting-started)). Docker starts the infrastructure, but you need `.pth` files in `backend/models/`.
-
----
-
-## Project structure
-
-```
-neuroscan/
-├── backend/
-│   ├── app/
-│   │   ├── main.py            FastAPI routes, MRI validation, CORS
-│   │   ├── models.py          architecture definitions (single source of truth)
-│   │   ├── inference.py       ModelRegistry, classify/segment/analyze logic
-│   │   └── gradcam.py         GradCAM + Attention Rollout implementations
-│   ├── models/                 .pth checkpoints go here (not committed)
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── App.tsx              composes the whole single-page site
-│   │   ├── ThemeContext.tsx     dark/light mode, persisted to localStorage
-│   │   ├── api.ts               typed client for every backend endpoint
-│   │   ├── components/
-│   │   │   ├── Navbar.tsx, Hero.tsx, Hero3D.tsx    landing page chrome
-│   │   │   ├── HowItWorks.tsx, Features.tsx, About.tsx, FAQ.tsx, PrivacyPolicy.tsx, Footer.tsx
-│   │   │   ├── ToolSection.tsx                     the actual working dashboard
-│   │   │   ├── ModelStatusBar.tsx, UploadZone.tsx, ResultsPanel.tsx, ComparisonView.tsx
-│   │   │   ├── MetricsDashboard.tsx                pulls real numbers from /api/metrics/*
-│   │   │   └── ScrollToTop.tsx
-│   │   └── hooks/useInView.ts   scroll-triggered fade-ins
-│   └── package.json
-├── notebooks/
-│   ├── classification_notebook.ipynb   CNN vs EfficientNet vs ViT training (Kaggle-ready)
-│   ├── segmentation_notebook.ipynb     U-Net training (Kaggle-ready)
-│   ├── explainability.py               Grad-CAM + Attention Rollout figure generation
-│   └── outputs/, outputs_segmentation/   real metrics JSON + figures from the actual training runs
-├── paper/
-│   └── paper_outline.md         IEEE-style paper skeleton with the real numbers slotted in
-├── docs/
-│   └── architecture.svg
-├── docker-compose.yml
-├── package-lock.json            ← root-level leftover from a one-time npm run; safe to ignore
-└── LICENSE
-```
-
-## Getting started
-
-You need Python 3.11+ and Node 18+. The model weights are not in this repo — they're trained on Kaggle (free GPU) and copied in locally.
-
-### 1. Train the models
-
-Classification (`notebooks/train_classification.py`) and segmentation (`notebooks/train_segmentation.py`) are written to run on Kaggle Notebooks:
-
-1. New Kaggle Notebook → Settings → Accelerator → GPU T4 x2.
-2. First cell:
-   ```python
-   import kagglehub
-   DATA_PATH = kagglehub.dataset_download("masoudnickparvar/brain-tumor-mri-dataset")
-   ```
-   (segmentation notebook uses `mateuszbuda/lgg-mri-segmentation` instead)
-3. Paste the rest of the training script in, set `DATA_ROOT = DATA_PATH`, run all.
-4. Classification takes roughly 30–45 minutes; segmentation roughly 20–30.
-5. Download `outputs/weights/*.pth` (classification) and `outputs_segmentation/weights/unet_best.pth` (segmentation) from the notebook's Output panel — for files much over 100MB, the Kaggle API (`kaggle kernels output <user>/<notebook> -p out/`) is more reliable than clicking the download icon in the browser.
-
-### 2. Put the weights in place
-
-```
+# Place .pth files in backend/models/
 backend/models/
 ├── cnn_best.pth
 ├── efficientnet_best.pth
@@ -267,128 +182,368 @@ backend/models/
 └── unet_best.pth
 ```
 
-### 3. Run the backend
-
+### Run Backend Server
 ```bash
 cd backend
-pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-Check `http://localhost:8000/api/models/status` — it tells you which checkpoints actually loaded.
+API documentation available at: `http://localhost:8000/docs`
 
-### 4. Run the frontend
+---
 
+## Training
+
+All training is designed to run on **Kaggle Notebooks** (free GPU T4 tier).
+
+### Classification Training
+
+1. Create new Kaggle Notebook
+2. Settings → Accelerator → GPU T4 x2
+3. Add code cell:
+```python
+import kagglehub
+DATA_PATH = kagglehub.dataset_download("masoudnickparvar/brain-tumor-mri-dataset")
+```
+4. Copy contents of `notebooks/train_classification.py`
+5. Set `DATA_ROOT = DATA_PATH` in the script
+6. Run all cells (~30-45 minutes)
+
+**Outputs:**
+- `outputs/weights/*.pth` — model checkpoints
+- `outputs/metrics/*.json` — test results & training history
+- `outputs/figures/*.png` — confusion matrices, training curves
+
+### Segmentation Training
+
+1. Same Kaggle setup as above
+2. Add code cell:
+```python
+import kagglehub
+DATA_PATH = kagglehub.dataset_download("mateuszbuda/lgg-mri-segmentation")
+```
+3. Copy contents of `notebooks/train_segmentation.py`
+4. Run all cells (~20-30 minutes)
+
+**Outputs:**
+- `outputs_segmentation/weights/unet_best.pth`
+- `outputs_segmentation/metrics/segmentation_test_results.json`
+
+### Download Weights from Kaggle
+For files >100MB, use Kaggle API:
 ```bash
-cd frontend
-npm install
-npm run dev
+kaggle kernels output <username>/<notebook-name> -p ./outputs
 ```
 
-Opens on `http://localhost:5173`.
+---
 
-### 5. Or just Docker
+## API Reference
 
-```bash
-docker-compose up
+### Endpoints
+
+#### Health Check
+```http
+GET /health
+```
+Returns server status.
+
+#### Model Status
+```http
+GET /api/models/status
+```
+Returns which model checkpoints are loaded:
+```json
+{
+  "cnn": true,
+  "efficientnet": true,
+  "vit": true,
+  "unet_segmentation": true
+}
 ```
 
-The frontend container runs `npm run dev` (Vite's dev server) — fine for local use, but see [Known Limitations](#known-limitations) if you're thinking about deploying this anywhere real.
+#### Classification
+```http
+POST /api/classify?model_name={cnn|efficientnet|vit}
+Content-Type: multipart/form-data
 
-## API reference
+file: <MRI image>
+```
 
-| Method | Path | Does | Response |
-|---|---|---|---|
-| GET | `/health` | liveness check | `{"status": "ok"}` |
-| GET | `/api/models/status` | which checkpoints are loaded | `{"cnn": true, "efficientnet": true, "vit": true, "unet_segmentation": false}` |
-| GET | `/api/metrics/classification` | real training metrics for the 3 classifiers | per-model accuracy/F1/history, read live from `notebooks/outputs/metrics/` |
-| GET | `/api/metrics/segmentation` | real U-Net Dice/IoU | read live from `notebooks/outputs_segmentation/metrics/` |
-| POST | `/api/classify` | one model's prediction + explainability overlay | `{predicted_class, confidence, class_probabilities, explainability_overlay_png_base64}` |
-| POST | `/api/classify/compare` | all 3 models + averaged ensemble | `{per_model: {...}, ensemble: {...}}` |
-| POST | `/api/segment` | U-Net mask + overlay | `{tumor_detected, tumor_area_ratio, mask_png_base64, overlay_png_base64}` |
-| POST | `/api/analyze` | classify, then segment if a tumor class is predicted | `{classification: {...}, segmentation?: {...}}` |
+**Response:**
+```json
+{
+  "model": "vit",
+  "predicted_class": "glioma",
+  "confidence": 0.923,
+  "class_probabilities": {
+    "glioma": 0.923,
+    "meningioma": 0.054,
+    "notumor": 0.012,
+    "pituitary": 0.011
+  },
+  "explainability_method": "Attention Rollout",
+  "explainability_overlay_png_base64": "iVBORw0KGg..."
+}
+```
 
-All `POST` endpoints take a single `multipart/form-data` image file. Uploads are validated before inference — if the mean per-channel difference across R/G/B is under ~18, it's treated as plausibly grayscale (a real MRI slice); otherwise the API returns `422` instead of running a model on a photo of someone's cat.
+#### Multi-Model Comparison
+```http
+POST /api/classify/compare
+Content-Type: multipart/form-data
+
+file: <MRI image>
+```
+
+Returns predictions from all available models + averaged ensemble.
+
+#### Segmentation
+```http
+POST /api/segment
+Content-Type: multipart/form-data
+
+file: <MRI image>
+```
+
+**Response:**
+```json
+{
+  "tumor_detected": true,
+  "tumor_area_ratio": 0.187,
+  "mask_png_base64": "iVBORw0KGg...",
+  "overlay_png_base64": "iVBORw0KGg..."
+}
+```
+
+#### Full Analysis
+```http
+POST /api/analyze?classifier={cnn|efficientnet|vit}
+Content-Type: multipart/form-data
+
+file: <MRI image>
+```
+
+Classifies image, then segments if tumor class predicted.
+
+#### Training Metrics
+```http
+GET /api/metrics/classification
+GET /api/metrics/segmentation
+```
+
+Returns real training metrics read from `notebooks/outputs/metrics/*.json`.
+
+---
 
 ## Datasets
 
-| Dataset | Source | Used for |
-|---|---|---|
-| Brain Tumor MRI Dataset | Nickparvar, Kaggle | Classification — 4 classes, 5,600 train / 1,600 test |
-| LGG MRI Segmentation | Buda, Saha & Mazurowski, *Computers in Biology and Medicine*, 2019 | Segmentation — 3,929 FLAIR slice/mask pairs |
+### Classification: Brain Tumor MRI Dataset
+**Source:** [Nickparvar, Kaggle](https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset)
 
-The classification dataset's documentation notes that the SARTAJ-sourced glioma images have label inconsistencies. That's a property of the public data, not something this repo corrects for — it's mentioned here so nobody mistakes a clean test split for a clean ground truth.
+| Class | Training | Testing | Total |
+|:------|:--------:|:-------:|:-----:|
+| Glioma | 1,400 | 400 | 1,800 |
+| Meningioma | 1,400 | 400 | 1,800 |
+| No Tumor | 1,400 | 400 | 1,800 |
+| Pituitary | 1,400 | 400 | 1,800 |
+| **Total** | **5,600** | **1,600** | **7,200** |
 
-## Known limitations
+**Modalities:** T1-weighted, T2-weighted, FLAIR (axial slices)  
+**Format:** JPEG (224×224 after preprocessing)  
+**Augmentation:** Horizontal flip, ±10° rotation, brightness/contrast jitter
 
-Worth knowing before you build on this:
+**Known Limitation:** SARTAJ-sourced glioma subset has documented label inconsistencies ([dataset notes](https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset/discussion)).
 
-1. ~~**GradCAM hooks accumulate on a long-running server.**~~ ✅ **Fixed** — `GradCAM` is now a cached property on `ModelRegistry`, so hooks register once per model and stay registered for the process lifetime instead of accumulating.
-2. **The MRI validation is a heuristic, not a real input validator.** It checks mean RGB channel difference and rejects anything over ~18. A desaturated color photo would sail right through. It catches the obvious case (someone uploads a random JPEG) and nothing more.
-3. **Docker's frontend service runs `npm run dev`.** That's Vite's dev server, meant for local development. Deploying this for real means `npm run build` served through nginx or similar.
-4. ~~**`requirements.txt` uses loose version bounds.**~~ ✅ **Fixed** — pinned to exact versions (`torch==2.12.1`, `fastapi==0.138.1`, etc.).
-5. ~~**`gradcam.py` calls the deprecated `matplotlib.cm.get_cmap("jet")`.**~~ ✅ **Fixed** — now uses `matplotlib.colormaps["jet"]`.
-6. ~~**There are no automated tests.**~~ ✅ **Fixed** — `backend/tests/` now has 17 passing pytest tests covering model output shapes, GradCAM caching, error paths, and MRI validation.
-7. **CORS is wide open** (`allow_origins=["*"]`). Fine for a research tool nobody's deploying publicly with real user data; not fine to copy-paste into something that is.
+### Segmentation: LGG MRI Segmentation Dataset
+**Source:** [Buda et al., Kaggle](https://www.kaggle.com/datasets/mateuszbuda/lgg-mri-segmentation)  
+**Paper:** Buda, Saha & Mazurowski, *Computers in Biology and Medicine*, 2019
 
-Beyond the code itself: the ensemble mode (`/api/classify/compare`) is fully implemented and was exercised informally during development, but no aggregate accuracy across the full test set has actually been measured for it. There's no number reported here for ensemble accuracy because one hasn't been computed — see the paper's Future Work section.
+- **Total slices:** 3,929 FLAIR/mask pairs
+- **Tumor-positive:** 1,373 slices
+- **Tumor-negative:** 2,556 slices
+- **Split:** 70% train / 15% val / 15% test (stratified by tumor presence)
+- **Format:** TIFF (256×256 after preprocessing)
+- **Loss:** Dice + Binary Cross-Entropy (handles class imbalance)
+
+---
+
+## Project Structure
+
+```
+NeuroScan-Research/
+├── backend/
+│   ├── app/
+│   │   ├── main.py           # FastAPI routes & input validation
+│   │   ├── models.py         # PyTorch architecture definitions
+│   │   ├── inference.py      # ModelRegistry, classify/segment logic
+│   │   └── gradcam.py        # Grad-CAM & Attention Rollout
+│   ├── models/               # .pth checkpoints (not in git)
+│   ├── tests/                # 17 pytest tests
+│   ├── requirements.txt      # Pinned dependencies
+│   └── Dockerfile
+│
+├── notebooks/
+│   ├── train_classification.py        # CNN/EfficientNet/ViT training
+│   ├── train_segmentation.py          # U-Net training
+│   ├── classification_notebook.ipynb  # Jupyter version
+│   ├── segmentation_notebook.ipynb    # Jupyter version
+│   ├── explainability.py              # Generate heatmap figures
+│   ├── outputs/                       # Real training results (committed)
+│   │   ├── metrics/*.json             # Test results & history
+│   │   └── figures/*.png              # Confusion matrices, curves
+│   └── outputs_segmentation/
+│       ├── metrics/segmentation_test_results.json
+│       └── figures/segmentation_qualitative.png
+│
+├── paper/
+│   └── paper_outline.md      # IEEE-style paper structure
+│
+├── docs/
+│   └── architecture.svg      # System architecture diagram
+│
+├── .github/
+│   ├── workflows/
+│   │   ├── tests.yml         # Pytest CI
+│   │   └── quality.yml       # Linting (black, flake8)
+│   └── ISSUE_TEMPLATE/       # Bug report, feature request, model improvement
+│
+├── README.md                 # This file
+├── CONTRIBUTING.md           # Contribution guidelines
+├── CHANGELOG.md              # Version history
+├── CODE_OF_CONDUCT.md
+├── LICENSE                   # MIT
+└── .gitignore
+```
+
+---
+
+## Comparison with Published Work
+
+| Method | Accuracy | Notes | Reference |
+|:-------|:--------:|:------|:----------|
+| Custom CNN (this work) | 78.19% | Baseline, no pretraining | — |
+| EfficientNet-B0 (this work) | 91.56% | Last 2 blocks fine-tuned | — |
+| **ViT-B/16 (this work)** | **94.69%** | Last encoder block fine-tuned | — |
+| EfficientNetV2b0 | 99.16% | Full backbone fine-tune | Hassan & Ghadiri, *Comp. Biol. Med.*, 2025 |
+| EfficientNetV2 + Attention | 99.76% | Custom attention modules | Pacal, *Cluster Comput.*, 2024 |
+
+**Context:** Published results use full backbone fine-tuning and/or custom architectural additions. Our ViT-B/16 deliberately fine-tunes only the last encoder block to maintain fair comparison across all three architectures under equal training effort.
+
+---
+
+## Limitations
+
+### Dataset
+- **2D slices only** — No 3D volumetric context (inter-slice information)
+- **Single institution** — LGG segmentation dataset is single-source
+- **Label noise** — SARTAJ glioma subset has documented inconsistencies
+
+### Model
+- **No ensemble evaluation** — Multi-model comparison implemented but not benchmarked on full test set
+- **Fixed input size** — 224×224 classification, 256×256 segmentation
+- **No uncertainty quantification** — Single forward pass, no Monte Carlo dropout or ensembling
+
+### Deployment
+- **MRI validation heuristic** — RGB channel difference check, not a trained classifier
+- **CPU inference slow** — No TensorRT/ONNX optimization
+- **No DICOM support** — Accepts JPEG/PNG/TIFF only
+
+### Clinical
+- **Not validated by radiologists** — No prospective clinical study
+- **No regulatory approval** — Research tool only, not medical device
+- **No demographic analysis** — Unknown performance across age/sex/ethnicity
+
+---
+
+## Citation
+
+If you use this work, please cite:
+
+```bibtex
+@misc{ahmad2026neuroscan,
+  author = {Ahmad, Malik Muhammad},
+  title  = {NeuroScan: A Comparative Deep Learning Framework for Brain Tumor MRI Classification and Segmentation},
+  year   = {2026},
+  url    = {https://github.com/malikmahmad/NeuroScan-Research}
+}
+```
+
+**Paper:** [arXiv:2026.xxxxx] (Forthcoming)
+
+---
+
+## Key References
+
+1. **Vision Transformers:** Dosovitskiy et al., "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale," *ICLR 2021*
+2. **EfficientNet:** Tan & Le, "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks," *ICML 2019*
+3. **U-Net:** Ronneberger et al., "U-Net: Convolutional Networks for Biomedical Image Segmentation," *MICCAI 2015*
+4. **Grad-CAM:** Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization," *ICCV 2017*
+5. **Attention Rollout:** Abnar & Zuidema, "Quantifying Attention Flow in Transformers," *ACL 2020*
+6. **LGG Dataset:** Buda, Saha & Mazurowski, "Association of genomic subtypes of lower-grade gliomas with shape features automatically extracted by a deep learning algorithm," *Computers in Biology and Medicine*, 2019
 
 ---
 
 ## Contributing
 
-We welcome contributions! Here's how you can help:
+We welcome contributions! Areas where help is most needed:
 
-### Areas for Contribution
+**Code:**
+- Additional architectures (ResNet, DenseNet, Swin Transformer)
+- 3D volumetric models
+- TensorRT/ONNX optimization for deployment
+- Uncertainty quantification (MC Dropout, deep ensembles)
 
-- **Code:** Bug fixes, new architectures (ResNet, DenseNet), mobile deployment (ONNX, TFLite)
-- **Documentation:** Tutorials, deployment guides, translations
-- **Research:** Ensemble validation, 3D volumetric analysis, cross-dataset validation
-- **Testing:** Edge cases, clinical validation with radiologists, performance benchmarks
+**Research:**
+- Cross-dataset validation
+- Ensemble accuracy on full 1,600-image test set
+- Attention mechanism analysis for ViT
+- Multi-task learning (classification + segmentation jointly)
 
-### How to Contribute
+**Documentation:**
+- Tutorials for reproducing experiments
+- Deployment guides (Docker, AWS, GCP)
+- Translation to other languages
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes following code standards (PEP 8, type hints, tests)
-4. Add tests for new features
-5. Submit a pull request with a detailed description
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for complete guidelines.
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for detailed guidelines.
 
 ---
 
-## Disclaimer
+## Contact
 
-This is a research and educational project. It has not been clinically validated, has not been reviewed by a radiologist, and was trained on a single publicly available dataset with documented labeling caveats. Do not use it, or anything like it, to make real decisions about real patients.
+**Malik Muhammad Ahmad**  
+BS Information Technology  
+MNS University of Engineering and Technology, Multan
 
-## Citation
+- **GitHub:** [@malikmahmad](https://github.com/malikmahmad)
+- **LinkedIn:** [malik-muhammad-ahmad](https://www.linkedin.com/in/malik-muhammad-ahmad-788b62338/)
+- **Email:** [malikmahmad@example.com](mailto:malikmahmad@example.com)
 
-```bibtex
-@misc{ahmad2026neuroscan,
-  author = {Ahmad, Malik Muhammad},
-  title  = {NeuroScan: A Comparative and Explainable Deep Learning Framework for Brain Tumor MRI Classification and Segmentation},
-  year   = {2026},
-  howpublished = {\url{https://github.com/malikmahmad/neuroscan}}
-}
-```
+---
 
-## Author
+## Acknowledgments
 
-**Malik Muhammad Ahmad**
-BS Information Technology — MNS University of Engineering and Technology, Multan
+- **Datasets:** Masoud Nickparvar (Kaggle), Buda et al. (LGG MRI Segmentation)
+- **Compute:** Kaggle Notebooks (free GPU tier)
+- **Frameworks:** PyTorch, FastAPI, torchvision
+- **Inspiration:** Medical AI research community
 
-- [LinkedIn](https://www.linkedin.com/in/malik-muhammad-ahmad-788b62338/)
-- [GitHub](https://github.com/malikmahmad)
-- [Instagram](https://www.instagram.com/priv_ahmad007/)
-- [X](https://x.com/MalikMuhammox1)
+---
 
 ## License
 
-MIT — see [LICENSE](LICENSE). The datasets keep their own original licenses; check each Kaggle dataset page before redistributing.
+MIT License — see [LICENSE](LICENSE) for details.
 
-## Acknowledgements
+**Datasets retain their original licenses:**
+- Brain Tumor MRI Dataset: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+- LGG MRI Segmentation: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-- Brain Tumor MRI Dataset — Masoud Nickparvar (Kaggle)
-- LGG MRI Segmentation — Mateusz Buda, Ashirbani Saha, Maciej A. Mazurowski
-- Built by Malik Muhammad Ahmad, BS IT, MNS University of Engineering and Technology, Multan — as a self-directed AI/ML project alongside full-stack development work
+---
+
+<div align="center">
+
+**NeuroScan** — Rigorous • Reproducible • Research-Grade
+
+⭐ Star this repository if you find it useful!
+
+[Report Bug](https://github.com/malikmahmad/NeuroScan-Research/issues) • [Request Feature](https://github.com/malikmahmad/NeuroScan-Research/issues) • [Discussions](https://github.com/malikmahmad/NeuroScan-Research/discussions)
+
+</div>

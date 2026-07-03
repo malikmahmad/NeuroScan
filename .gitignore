@@ -22,10 +22,9 @@ notebooks/outputs/
 notebooks/outputs_segmentation/
 notebooks/data/
 
-# Node / frontend
-frontend/node_modules/
-frontend/dist/
-frontend/.env
+# Frontend — maintained in a separate repository
+# See: https://github.com/malikmahmad/NeuroScan-Frontend
+frontend/
 
 # OS
 .DS_Store
