@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![NeuroScan Cover](docs/neuroscan_cover.png)
+![NeuroScan Cover](docs/cover.png)
 
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.10+-EE4C2C.svg)](https://pytorch.org/)
