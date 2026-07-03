@@ -2,7 +2,11 @@
 
 <div align="center">
 
-![NeuroScan Cover](docs/cover.png)
+# 🧠 NeuroScan
+
+### Brain Tumor MRI Analysis with Deep Learning
+
+**A comparative framework for classification, segmentation, and explainability**
 
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.10+-EE4C2C.svg)](https://pytorch.org/)
@@ -12,11 +16,11 @@
 [![Quality](https://github.com/malikmahmad/neuroscan/actions/workflows/quality.yml/badge.svg)](https://github.com/malikmahmad/neuroscan/actions/workflows/quality.yml)
 [![Tests](https://github.com/malikmahmad/neuroscan/actions/workflows/tests.yml/badge.svg)](https://github.com/malikmahmad/neuroscan/actions/workflows/tests.yml)
 
-**A brain tumor MRI analysis system that classifies, segments, and explains its own predictions**
+```
+CNN (78.19%)  •  EfficientNet-B0 (91.56%)  •  ViT-B/16 (94.69%)  •  U-Net Segmentation (Dice 0.886)
+```
 
-*Built to answer: How does a CNN trained from scratch compare to EfficientNet and Vision Transformer when all three see the exact same data?*
-
-[Features](#what-it-does) • [Results](#results) • [Getting Started](#getting-started) • [Documentation](#api-reference)
+**[Features](#what-it-does)** • **[Results](#results)** • **[Quick Start](#quick-start)** • **[Documentation](#api-reference)**
 
 </div>
 
