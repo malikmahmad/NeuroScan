@@ -135,7 +135,10 @@ def segmentation_metrics():
         return JSONResponse(
             {
                 "available": False,
-                "message": "No segmentation metrics found yet. Place the segmentation outputs folder under notebooks/.",
+                "message": (
+                    "No segmentation metrics found yet. "
+                    "Place the segmentation outputs folder under notebooks/."
+                ),
             }
         )
     test = _load_json(SEGMENTATION_METRICS_DIR / "segmentation_test_results.json")
