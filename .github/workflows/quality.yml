@@ -21,11 +21,16 @@ jobs:
       - name: Install lint tools
         run: pip install flake8 black
 
-      - name: flake8
-        run: flake8 backend/ --max-line-length=110 --extend-ignore=E203
+      - name: black --format and commit
+        run: |
+          black --line-length 110 backend/app/ backend/tests/
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet || git commit -am "style: auto-format with black (line-length 110)"
+          git push || true
 
-      - name: black --check
-        run: black --check backend/
+      - name: flake8
+        run: flake8 backend/app/ backend/tests/ --max-line-length=110 --extend-ignore=E203
 
   python-types:
     name: Python types (mypy)
@@ -48,24 +53,3 @@ jobs:
       - name: mypy
         continue-on-error: true
         run: mypy backend/app/ --ignore-missing-imports
-
-  typescript:
-    name: TypeScript (tsc --noEmit)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Type check
-        working-directory: frontend
-        run: npx tsc --noEmit

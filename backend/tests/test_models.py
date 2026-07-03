@@ -1,11 +1,16 @@
 import torch
-import pytest
-from app.models import build_custom_cnn, build_efficientnet, build_vit, UNet, CLASS_NAMES, NUM_CLASSES
-
+from app.models import (
+    CLASS_NAMES,
+    NUM_CLASSES,
+    UNet,
+    build_custom_cnn,
+    build_efficientnet,
+    build_vit,
+)
 
 BATCH = 2
-IMG   = 224
-SEG   = 256
+IMG = 224
+SEG = 256
 
 
 def _rand(b: int, h: int, w: int) -> torch.Tensor:
@@ -38,6 +43,7 @@ class TestEfficientNet:
 
     def test_classifier_replaced(self):
         import torch.nn as nn
+
         model = build_efficientnet()
         assert isinstance(model.classifier[-1], nn.Linear)
         assert model.classifier[-1].out_features == NUM_CLASSES
@@ -53,6 +59,7 @@ class TestViT:
 
     def test_head_replaced(self):
         import torch.nn as nn
+
         model = build_vit()
         assert isinstance(model.heads.head, nn.Linear)
         assert model.heads.head.out_features == NUM_CLASSES
@@ -71,6 +78,6 @@ class TestUNet:
         model.eval()
         with torch.no_grad():
             logits = model(_rand(1, SEG, SEG))
-            probs  = torch.sigmoid(logits)
+            probs = torch.sigmoid(logits)
         assert probs.min() >= 0.0
         assert probs.max() <= 1.0
