@@ -1,0 +1,14 @@
+# Language statistics optimization
+*.md linguist-documentation
+*.txt linguist-documentation
+
+# Mark generated/vendor code
+frontend/dist/* linguist-generated
+frontend/node_modules/* linguist-vendored
+backend/venv*/* linguist-vendored
+**/package-lock.json linguist-generated
+*.tsbuildinfo linguist-generated
+
+# Emphasize Jupyter notebooks
+*.ipynb linguist-detectable
+notebooks/*.ipynb linguist-detectable
