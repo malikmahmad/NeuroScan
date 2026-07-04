@@ -12,8 +12,14 @@ from PIL import Image
 from . import inference
 from .inference import WeightsNotFoundError
 
+import os
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("neuroscan")
+
+# Allow all origins in development; restrict to ALLOWED_ORIGINS env var in production
+_raw = os.environ.get("ALLOWED_ORIGINS", "*")
+_origins = [o.strip() for o in _raw.split(",")] if _raw != "*" else ["*"]
 
 app = FastAPI(
     title="NeuroScan API",
@@ -23,7 +29,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
