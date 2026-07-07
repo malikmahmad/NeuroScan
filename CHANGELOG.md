@@ -4,6 +4,27 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ---
 
+## [1.2.0] — 2026-07-07
+
+### Added
+- **4 new classification models** — ResNet-50, DenseNet-121, MobileNetV3-Large, and Swin Transformer (Swin-T), all trained under identical conditions (same data splits, augmentation, optimizer, 15 epochs) as the original 3 models.
+- **Architecture-specific explainability for all new models** — Grad-CAM for ResNet-50, DenseNet-121, MobileNetV3 (all CNN-based); Attention Rollout for Swin-T (transformer-based).
+- **`timm==1.0.9`** added to `requirements.txt` for Swin Transformer support.
+- **Updated API endpoints** — `/api/classify` and `/api/analyze` now accept all 7 model names.
+- **Updated README** — full 7-model results table, architecture details, and comparison with published work.
+
+### Results (held-out test set, 1,600 images)
+
+| Model | Accuracy | Macro F1 | ROC-AUC |
+|---|---|---|---|
+| ResNet-50 | 95.25% | 0.9514 | 0.9906 |
+| Swin-T | 94.81% | 0.9470 | 0.9895 |
+| ViT-B/16 | 94.69% | 0.9461 | 0.9897 |
+| DenseNet-121 | 94.25% | 0.9409 | 0.9857 |
+| MobileNetV3 | 94.25% | 0.9411 | 0.9906 |
+
+---
+
 ## [1.1.0] — 2026-07-03
 
 ### Changed

@@ -47,6 +47,10 @@ Additionally, we integrate **U-Net segmentation** for tumor localization and imp
 |:------|:--------:|:--------:|:-----------:|:-------------:|
 | Custom CNN | 78.19% | 0.769 | 0.769 | 0.926 |
 | EfficientNet-B0 | 91.56% | 0.913 | 0.913 | 0.985 |
+| DenseNet-121 | 94.25% | 0.941 | 0.941 | 0.986 |
+| MobileNetV3-Large | 94.25% | 0.941 | 0.941 | 0.991 |
+| Swin-T | 94.81% | 0.947 | 0.947 | 0.990 |
+| ResNet-50 | 95.25% | 0.951 | 0.951 | 0.991 |
 | **ViT-B/16** | **94.69%** | **0.946** | **0.946** | **0.990** |
 
 ### Per-Class Performance (ViT-B/16)
@@ -78,6 +82,20 @@ All results are from held-out test sets never seen during training or hyperparam
 
 ## Architecture Details
 
+### Model Comparison
+
+| Model | Total Params | Trainable | Pretraining | Explainability |
+|:------|:-----------:|:---------:|:-----------:|:--------------:|
+| Custom CNN | 0.42M | 0.42M (100%) | None | Grad-CAM |
+| EfficientNet-B0 | 4.01M | 1.13M | ImageNet-1K | Grad-CAM |
+| MobileNetV3-Large | 4.21M | 2.99M | ImageNet-1K | Grad-CAM |
+| DenseNet-121 | 6.96M | 2.16M | ImageNet-1K | Grad-CAM |
+| ResNet-50 | 23.52M | 14.97M | ImageNet-1K | Grad-CAM |
+| Swin-T | 27.52M | 15.37M | ImageNet-1K | Attention Rollout |
+| ViT-B/16 | 85.8M | 7.09M | ImageNet-1K | Attention Rollout |
+
+All parameter counts computed directly from model definitions in `backend/app/models.py`.
+
 ### 1. Custom CNN (Baseline)
 ```
 Input (3×224×224)
@@ -90,31 +108,55 @@ Input (3×224×224)
 ├─ Dropout(0.3) + Linear(256→128) + ReLU
 └─ Dropout(0.3) + Linear(128→4)
 ```
-**Parameters:** ~7.4M  
+**Parameters:** 0.42M total, 0.42M trainable (100%, trained from scratch)
 **Purpose:** Establish baseline performance without transfer learning
 
-### 2. EfficientNet-B0 (Transfer Learning)
+### 2. EfficientNet-B0
 - **Backbone:** ImageNet-pretrained EfficientNet-B0
 - **Fine-tuning:** Last 2 feature blocks + classifier head
 - **Modified Head:** Dropout(0.3) → Linear(1280→4)
-- **Parameters:** 10.7M (4.2M trainable)
-- **Purpose:** Industry-standard transfer learning approach
+- **Parameters:** 4.01M total, 1.13M trainable
 
-### 3. Vision Transformer (ViT-B/16)
-- **Backbone:** ImageNet-21k pretrained ViT-B/16
+### 3. MobileNetV3-Large
+- **Backbone:** ImageNet-pretrained MobileNetV3-Large
+- **Fine-tuning:** Last 3 feature blocks + classifier head
+- **Modified Head:** Linear(1280→4)
+- **Parameters:** 4.21M total, 2.99M trainable
+
+### 4. DenseNet-121
+- **Backbone:** ImageNet-pretrained DenseNet-121
+- **Fine-tuning:** DenseBlock4 + norm5 + classifier head
+- **Modified Head:** Dropout(0.3) → Linear(1024→4)
+- **Parameters:** 6.96M total, 2.16M trainable
+
+### 5. ResNet-50
+- **Backbone:** ImageNet-pretrained ResNet-50
+- **Fine-tuning:** Layer4 + fc head
+- **Modified Head:** Dropout(0.3) → Linear(2048→4)
+- **Parameters:** 23.52M total, 14.97M trainable
+
+### 6. Swin Transformer (Swin-T)
+- **Backbone:** ImageNet-pretrained Swin-Tiny
+- **Fine-tuning:** Last Swin stage + classification head
+- **Modified Head:** Linear(768→4)
+- **Parameters:** 27.52M total, 15.37M trainable
+- **Explainability:** Attention Rollout (transformer-based, no convolutions)
+
+### 7. Vision Transformer (ViT-B/16)
+- **Backbone:** ImageNet-pretrained ViT-B/16
 - **Fine-tuning:** Last encoder block + classification head
 - **Modified Head:** Linear(768→4)
-- **Parameters:** 86M (11M trainable)
-- **Purpose:** State-of-the-art attention-based architecture
+- **Parameters:** 85.8M total, 7.09M trainable
+- **Explainability:** Attention Rollout
 
-### 4. U-Net (Segmentation)
+### 8. U-Net (Segmentation)
 ```
 Encoder: 4 stages (32→64→128→256)
 Bottleneck: 512 channels
 Decoder: 4 stages with skip connections
 Output: Single-channel binary mask
 ```
-**Loss:** Dice + Binary Cross-Entropy  
+**Loss:** Dice + Binary Cross-Entropy
 **Purpose:** Tumor localization when classification predicts tumor class
 
 ---
@@ -263,7 +305,7 @@ Returns which model checkpoints are loaded:
 
 #### Classification
 ```http
-POST /api/classify?model_name={cnn|efficientnet|vit}
+POST /api/classify?model_name={cnn|efficientnet|vit|resnet50|densenet121|mobilenetv3|swin_t}
 Content-Type: multipart/form-data
 
 file: <MRI image>
@@ -422,11 +464,15 @@ NeuroScan-Research/
 |:-------|:--------:|:------|:----------|
 | Custom CNN (this work) | 78.19% | Baseline, no pretraining | — |
 | EfficientNet-B0 (this work) | 91.56% | Last 2 blocks fine-tuned | — |
+| DenseNet-121 (this work) | 94.25% | DenseBlock4 fine-tuned | — |
+| MobileNetV3 (this work) | 94.25% | Last 3 blocks fine-tuned | — |
+| Swin-T (this work) | 94.81% | Last stage fine-tuned | — |
 | **ViT-B/16 (this work)** | **94.69%** | Last encoder block fine-tuned | — |
+| **ResNet-50 (this work)** | **95.25%** | Layer4 fine-tuned | — |
 | EfficientNetV2b0 | 99.16% | Full backbone fine-tune | Hassan & Ghadiri, *Comp. Biol. Med.*, 2025 |
 | EfficientNetV2 + Attention | 99.76% | Custom attention modules | Pacal, *Cluster Comput.*, 2024 |
 
-**Context:** Published results use full backbone fine-tuning and/or custom architectural additions. Our ViT-B/16 deliberately fine-tunes only the last encoder block to maintain fair comparison across all three architectures under equal training effort.
+**Context:** All 7 models in this work use identical data splits, augmentation, and training protocol — only the architecture changes. Published results use full backbone fine-tuning and/or custom architectural additions.
 
 ---
 

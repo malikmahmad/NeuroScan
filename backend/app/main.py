@@ -162,7 +162,10 @@ def segmentation_metrics():
 @app.post("/api/classify")
 def classify_endpoint(
     file: UploadFile = File(...),
-    model_name: str = Query("efficientnet", enum=["cnn", "efficientnet", "vit"]),
+    model_name: str = Query(
+        "efficientnet",
+        enum=["cnn", "efficientnet", "vit", "resnet50", "densenet121", "mobilenetv3", "swin_t"],
+    ),
 ):
     image = _read_image(file)
     try:
@@ -194,7 +197,10 @@ def segment_endpoint(file: UploadFile = File(...)):
 @app.post("/api/analyze")
 def analyze_endpoint(
     file: UploadFile = File(...),
-    classifier: str = Query("efficientnet", enum=["cnn", "efficientnet", "vit"]),
+    classifier: str = Query(
+        "efficientnet",
+        enum=["cnn", "efficientnet", "vit", "resnet50", "densenet121", "mobilenetv3", "swin_t"],
+    ),
 ):
     image = _read_image(file)
     try:

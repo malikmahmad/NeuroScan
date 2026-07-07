@@ -51,6 +51,47 @@ def build_vit(num_classes: int = NUM_CLASSES) -> nn.Module:
     return model
 
 
+def build_resnet50(num_classes: int = NUM_CLASSES) -> nn.Module:
+    model = models.resnet50(weights=None)
+    model.fc = nn.Sequential(
+        nn.Dropout(0.3),
+        nn.Linear(model.fc.in_features, num_classes),
+    )
+    return model
+
+
+def build_densenet121(num_classes: int = NUM_CLASSES) -> nn.Module:
+    model = models.densenet121(weights=None)
+    model.classifier = nn.Sequential(
+        nn.Dropout(0.3),
+        nn.Linear(model.classifier.in_features, num_classes),
+    )
+    return model
+
+
+def build_mobilenetv3(num_classes: int = NUM_CLASSES) -> nn.Module:
+    model = models.mobilenet_v3_large(weights=None)
+    in_features = model.classifier[-1].in_features
+    model.classifier[-1] = nn.Linear(in_features, num_classes)
+    return model
+
+
+def build_swin_t(num_classes: int = NUM_CLASSES) -> nn.Module:
+    try:
+        import timm
+        model = timm.create_model(
+            "swin_tiny_patch4_window7_224",
+            pretrained=False,
+            num_classes=num_classes,
+        )
+        return model
+    except ImportError:
+        raise ImportError(
+            "timm is required for Swin Transformer. "
+            "Install it with: pip install timm==1.0.9"
+        )
+
+
 class DoubleConv(nn.Module):
     def __init__(self, in_ch: int, out_ch: int):
         super().__init__()
@@ -105,7 +146,11 @@ class UNet(nn.Module):
 
 
 MODEL_BUILDERS = {
-    "cnn": build_custom_cnn,
+    "cnn":         build_custom_cnn,
     "efficientnet": build_efficientnet,
-    "vit": build_vit,
+    "vit":         build_vit,
+    "resnet50":    build_resnet50,
+    "densenet121": build_densenet121,
+    "mobilenetv3": build_mobilenetv3,
+    "swin_t":      build_swin_t,
 }
