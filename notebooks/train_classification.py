@@ -132,10 +132,62 @@ def build_vit(num_classes=NUM_CLASSES):
     return model
 
 
+def build_resnet50(num_classes=NUM_CLASSES):
+    model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+    for param in model.parameters():
+        param.requires_grad = False
+    for param in model.layer4.parameters():
+        param.requires_grad = True
+    model.fc = nn.Sequential(nn.Dropout(0.3), nn.Linear(model.fc.in_features, num_classes))
+    return model
+
+
+def build_densenet121(num_classes=NUM_CLASSES):
+    model = models.densenet121(weights=models.DenseNet121_Weights.IMAGENET1K_V1)
+    for param in model.features.parameters():
+        param.requires_grad = False
+    for param in model.features.denseblock4.parameters():
+        param.requires_grad = True
+    for param in model.features.norm5.parameters():
+        param.requires_grad = True
+    model.classifier = nn.Sequential(nn.Dropout(0.3), nn.Linear(model.classifier.in_features, num_classes))
+    return model
+
+
+def build_mobilenetv3(num_classes=NUM_CLASSES):
+    model = models.mobilenet_v3_large(weights=models.MobileNet_V3_Large_Weights.IMAGENET1K_V1)
+    for param in model.features.parameters():
+        param.requires_grad = False
+    for param in model.features[-3:].parameters():
+        param.requires_grad = True
+    in_features = model.classifier[-1].in_features
+    model.classifier[-1] = nn.Linear(in_features, num_classes)
+    return model
+
+
+def build_swin_t(num_classes=NUM_CLASSES):
+    try:
+        import timm
+        model = timm.create_model("swin_tiny_patch4_window7_224", pretrained=True, num_classes=num_classes)
+        for param in model.parameters():
+            param.requires_grad = False
+        for param in model.layers[-1].parameters():
+            param.requires_grad = True
+        for param in model.head.parameters():
+            param.requires_grad = True
+        return model
+    except ImportError:
+        raise ImportError("timm is required for Swin-T. Install with: pip install timm==1.0.9")
+
+
 MODEL_BUILDERS = {
     "cnn":          build_custom_cnn,
     "efficientnet": build_efficientnet,
     "vit":          build_vit,
+    "resnet50":     build_resnet50,
+    "densenet121":  build_densenet121,
+    "mobilenetv3":  build_mobilenetv3,
+    "swin_t":       build_swin_t,
 }
 
 

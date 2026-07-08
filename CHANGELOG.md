@@ -92,8 +92,8 @@ First complete, working release. All items below are implemented and verified ag
 - Uncertainty quantification (MC Dropout)
 - ROC curve figures in outputs
 
-### [2.0.0]
+### [2.0.0] Planned
 - Cross-dataset validation
 - 3D volumetric segmentation
-- Additional architectures (ResNet-50, DenseNet-121, Swin Transformer)
+- Additional architectures (ConvNeXt, MedViT, EfficientNetV2)
 - DICOM input support

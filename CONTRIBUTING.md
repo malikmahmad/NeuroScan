@@ -1,6 +1,6 @@
 # Contributing to NeuroScan
 
-Thanks for your interest. NeuroScan is a research framework comparing three neural architectures for brain tumor MRI classification and segmentation. Contributions that strengthen the scientific rigor, extend reproducibility, or improve code quality are most welcome.
+Thanks for your interest. NeuroScan is a research framework comparing seven neural architectures for brain tumor MRI classification and segmentation. Contributions that strengthen the scientific rigor, extend reproducibility, or improve code quality are most welcome.
 
 ## Before You Open an Issue
 
@@ -99,7 +99,7 @@ Roughly in priority order:
 
 2. **Cross-dataset validation** — Testing performance on a dataset outside the Nickparvar collection would show whether the reported numbers are specific to this data distribution.
 
-3. **Additional architectures** — ResNet-50, DenseNet-121, Swin Transformer, MedViT — following the same controlled-comparison protocol (identical splits, identical augmentation).
+3. **Additional architectures** — MedViT, ConvNeXt, or other transformer variants — following the same controlled-comparison protocol (identical splits, identical augmentation).
 
 4. **Uncertainty quantification** — MC Dropout or deep ensembles; single-pass softmax confidence is not calibrated uncertainty.
 

@@ -118,7 +118,7 @@ def classification_metrics():
                 ),
             }
         )
-    models = ["cnn", "efficientnet", "vit"]
+    models = ["cnn", "efficientnet", "vit", "resnet50", "densenet121", "mobilenetv3", "swin_t"]
     data = {}
     for m in models:
         test = _load_json(CLASSIFICATION_METRICS_DIR / f"{m}_test_results.json")

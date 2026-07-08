@@ -6,7 +6,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.10+-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![arXiv](https://img.shields.io/badge/arXiv-2026.xxxxx-b31b1b.svg)](https://arxiv.org/)
-[![Tests](https://github.com/malikmahmad/NeuroScan-Research/actions/workflows/tests.yml/badge.svg)](https://github.com/malikmahmad/NeuroScan-Research/actions/workflows/tests.yml)
+[![Tests](https://github.com/malikmahmad/NeuroScan/actions/workflows/tests.yml/badge.svg)](https://github.com/malikmahmad/NeuroScan/actions/workflows/tests.yml)
 
 **A rigorous comparative study of deep learning architectures for automated brain tumor classification and segmentation from MRI scans.**
 
@@ -200,8 +200,8 @@ Grad-CAM requires spatial convolutional feature maps for gradient computation. V
 
 ### Clone Repository
 ```bash
-git clone https://github.com/malikmahmad/NeuroScan-Research.git
-cd NeuroScan-Research
+git clone https://github.com/malikmahmad/NeuroScan.git
+cd NeuroScan
 ```
 
 ### Backend Setup
@@ -221,6 +221,10 @@ backend/models/
 ├── cnn_best.pth
 ├── efficientnet_best.pth
 ├── vit_best.pth
+├── resnet50_best.pth
+├── densenet121_best.pth
+├── mobilenetv3_best.pth
+├── swin_t_best.pth
 └── unet_best.pth
 ```
 
@@ -411,7 +415,7 @@ Returns real training metrics read from `notebooks/outputs/metrics/*.json`.
 ## Project Structure
 
 ```
-NeuroScan-Research/
+NeuroScan/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py           # FastAPI routes & input validation
@@ -509,7 +513,7 @@ If you use this work, please cite:
   author = {Ahmad, Malik Muhammad},
   title  = {NeuroScan: A Comparative Deep Learning Framework for Brain Tumor MRI Classification and Segmentation},
   year   = {2026},
-  url    = {https://github.com/malikmahmad/NeuroScan-Research}
+  url    = {https://github.com/malikmahmad/NeuroScan}
 }
 ```
 
@@ -533,7 +537,7 @@ If you use this work, please cite:
 We welcome contributions! Areas where help is most needed:
 
 **Code:**
-- Additional architectures (ResNet, DenseNet, Swin Transformer)
+- Additional architectures (ConvNeXt, MedViT, EfficientNetV2)
 - 3D volumetric models
 - TensorRT/ONNX optimization for deployment
 - Uncertainty quantification (MC Dropout, deep ensembles)
@@ -590,6 +594,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ⭐ Star this repository if you find it useful!
 
-[Report Bug](https://github.com/malikmahmad/NeuroScan-Research/issues) • [Request Feature](https://github.com/malikmahmad/NeuroScan-Research/issues) • [Discussions](https://github.com/malikmahmad/NeuroScan-Research/discussions)
+[Report Bug](https://github.com/malikmahmad/NeuroScan/issues) • [Request Feature](https://github.com/malikmahmad/NeuroScan/issues) • [Discussions](https://github.com/malikmahmad/NeuroScan/discussions)
 
 </div>
