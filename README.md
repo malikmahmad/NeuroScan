@@ -18,7 +18,7 @@
 
 ## Overview
 
-NeuroScan is a comprehensive research framework that evaluates **three fundamentally different neural architectures** under **rigorously controlled conditions** for brain tumor MRI analysis. Unlike most work that reports single-model performance, this project establishes a fair, reproducible comparison across:
+NeuroScan is a comprehensive research framework that evaluates **seven deep learning architectures** under **rigorously controlled conditions** for brain tumor MRI analysis. Unlike most work that reports single-model performance, this project establishes a fair, reproducible comparison across:
 
 - **Custom CNN** (baseline, trained from scratch)
 - **EfficientNet-B0** (transfer learning from ImageNet)
@@ -428,7 +428,7 @@ NeuroScan/
 │   └── Dockerfile
 │
 ├── notebooks/
-│   ├── train_classification.py        # CNN/EfficientNet/ViT training
+│   ├── train_classification.py        # All 7 classifiers training
 │   ├── train_segmentation.py          # U-Net training
 │   ├── classification_notebook.ipynb  # Jupyter version
 │   ├── segmentation_notebook.ipynb    # Jupyter version

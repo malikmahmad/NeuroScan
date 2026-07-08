@@ -59,7 +59,7 @@ First complete, working release. All items below are implemented and verified ag
 - U-Net (encoder-decoder with skip connections, Dice+BCE loss)
 
 **Research Results**
-- Classification on 1,600-image held-out test set: CNN 78.19%, EfficientNet 91.56%, ViT 94.69%
+- Classification on 1,600-image held-out test set: CNN 78.19%, EfficientNet 91.56%, DenseNet 94.25%, MobileNetV3 94.25%, Swin-T 94.81%, ViT 94.69%, ResNet-50 95.25%
 - Segmentation on 589-slice held-out test set: Dice 0.886, IoU 0.856
 - All metrics stored in `notebooks/outputs/metrics/*.json` (read at runtime, not hard-coded)
 
@@ -76,7 +76,7 @@ First complete, working release. All items below are implemented and verified ag
 **Training Infrastructure**
 - Kaggle-ready training notebooks: `notebooks/train_classification.py`, `notebooks/train_segmentation.py`
 - Full training outputs committed: metrics JSON, training history, figures
-- Identical data splits, preprocessing, augmentation, and optimizer across all three classifiers
+- Identical data splits, preprocessing, augmentation, and optimizer across all seven classifiers
 
 **Documentation**
 - `paper/paper_outline.md` — IEEE-style paper structure with real results

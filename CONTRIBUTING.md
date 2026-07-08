@@ -22,8 +22,8 @@ For architecture changes (new model, different loss, fine-tuning strategy), use 
 ## Development Setup
 
 ```bash
-git clone https://github.com/malikmahmad/NeuroScan-Research.git
-cd NeuroScan-Research
+git clone https://github.com/malikmahmad/NeuroScan.git
+cd NeuroScan
 
 # Backend
 cd backend
@@ -43,7 +43,7 @@ pytest tests/ -v
 
 All 17 tests pass without requiring `.pth` checkpoint files. Tests cover:
 
-- Output shapes for all four architectures (CNN, EfficientNet, ViT, U-Net)
+- Output shapes for all seven classifiers (CNN, EfficientNet, ResNet-50, DenseNet-121, MobileNetV3, Swin-T, ViT) and U-Net
 - GradCAM hook caching (regression for the hook-accumulation bug)
 - `WeightsNotFoundError` path
 - `blend_cam_overlay` output
