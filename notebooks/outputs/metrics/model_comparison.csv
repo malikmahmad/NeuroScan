@@ -1,0 +1,4 @@
+,Test Accuracy,Macro F1,Weighted F1,ROC-AUC (OvR)
+cnn,0.7819,0.7693,0.7693,0.9264
+efficientnet,0.9156,0.913,0.913,0.985
+vit,0.9469,0.9461,0.9461,0.9897

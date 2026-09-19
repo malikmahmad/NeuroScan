@@ -1,0 +1,37 @@
+{
+  "cnn": {
+    "accuracy": 0.7812,
+    "ci_low": 0.7603,
+    "ci_high": 0.8008
+  },
+  "efficientnet": {
+    "accuracy": 0.9156,
+    "ci_low": 0.901,
+    "ci_high": 0.9283
+  },
+  "resnet50": {
+    "accuracy": 0.9544,
+    "ci_low": 0.943,
+    "ci_high": 0.9636
+  },
+  "densenet121": {
+    "accuracy": 0.9387,
+    "ci_low": 0.9259,
+    "ci_high": 0.9495
+  },
+  "mobilenetv3": {
+    "accuracy": 0.9413,
+    "ci_low": 0.9286,
+    "ci_high": 0.9518
+  },
+  "swin_t": {
+    "accuracy": 0.9394,
+    "ci_low": 0.9266,
+    "ci_high": 0.95
+  },
+  "vit": {
+    "accuracy": 0.9387,
+    "ci_low": 0.9259,
+    "ci_high": 0.9495
+  }
+}

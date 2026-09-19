@@ -17,18 +17,18 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 | Model | Accuracy | Macro F1 | ROC-AUC |
 |---|---|---|---|
-| ResNet-50 | 95.25% | 0.9514 | 0.9906 |
-| Swin-T | 94.81% | 0.9470 | 0.9895 |
-| ViT-B/16 | 94.69% | 0.9461 | 0.9897 |
-| DenseNet-121 | 94.25% | 0.9409 | 0.9857 |
-| MobileNetV3 | 94.25% | 0.9411 | 0.9906 |
+| ResNet-50 | 95.44% | 0.954 | 0.990 |
+| MobileNetV3 | 94.13% | 0.940 | 0.988 |
+| Swin-T | 93.94% | 0.938 | 0.987 |
+| DenseNet-121 | 93.87% | 0.937 | 0.989 |
+| ViT-B/16 | 93.87% | 0.937 | 0.991 |
 
 ---
 
 ## [1.1.0] — 2026-07-03
 
 ### Changed
-- **Repository refactored to pure research structure.** Frontend web application moved to a separate repository ([NeuroScan-Frontend](https://github.com/malikmahmad)). This repo now focuses exclusively on research components: backend inference engine, training notebooks, model architectures, and paper documentation.
+- **Repository restructured as full-stack research project.** Backend inference engine, training notebooks, model architectures, paper documentation, and React frontend (`frontend/`) are all maintained in this repository.
 - **README completely rewritten** as a research-grade document covering architecture comparisons, full results tables (per-class metrics, confusion matrices), training methodology, dataset details, API reference, and limitations.
 - **CONTRIBUTING.md rewritten** — removed frontend-specific guidelines, expanded research contribution areas (cross-dataset validation, ensemble evaluation, new architectures, uncertainty quantification).
 
@@ -59,7 +59,7 @@ First complete, working release. All items below are implemented and verified ag
 - U-Net (encoder-decoder with skip connections, Dice+BCE loss)
 
 **Research Results**
-- Classification on 1,600-image held-out test set: CNN 78.19%, EfficientNet 91.56%, DenseNet 94.25%, MobileNetV3 94.25%, Swin-T 94.81%, ViT 94.69%, ResNet-50 95.25%
+- Classification on 1,600-image held-out test set: CNN 78.12%, EfficientNet 91.56%, DenseNet 93.87%, MobileNetV3 94.13%, Swin-T 93.94%, ViT 93.87%, ResNet-50 95.44%
 - Segmentation on 589-slice held-out test set: Dice 0.886, IoU 0.856
 - All metrics stored in `notebooks/outputs/metrics/*.json` (read at runtime, not hard-coded)
 

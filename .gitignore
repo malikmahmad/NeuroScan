@@ -13,23 +13,17 @@ backend/venv311/
 .pytest_cache/
 htmlcov/
 
-# Model weights (large, trained locally/on Kaggle — not committed)
+# Model weights (large — train locally or on Kaggle, then copy to backend/models/)
 backend/models/*.pth
 !backend/models/.gitkeep
 
-# Notebook outputs
-notebooks/outputs/
-notebooks/outputs_segmentation/
+# Raw dataset files (download via Kaggle)
 notebooks/data/
 
-# Frontend — maintained in a separate repository
-# See: https://github.com/malikmahmad/NeuroScan-Frontend
-frontend/
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
 
 # OS
 .DS_Store
-
-# Project files not for GitHub
-cover.html
-NEUROSCAN_ARTICLE.md
-LINKEDIN_POST.md
+Thumbs.db

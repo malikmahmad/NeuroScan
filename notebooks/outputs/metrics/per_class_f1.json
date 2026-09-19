@@ -1,0 +1,44 @@
+{
+  "cnn": {
+    "glioma": 0.7111,
+    "meningioma": 0.6393,
+    "notumor": 0.863,
+    "pituitary": 0.8606
+  },
+  "efficientnet": {
+    "glioma": 0.8391,
+    "meningioma": 0.8873,
+    "notumor": 0.9444,
+    "pituitary": 0.9814
+  },
+  "densenet121": {
+    "glioma": 0.8768,
+    "meningioma": 0.9455,
+    "notumor": 0.9357,
+    "pituitary": 0.9901
+  },
+  "mobilenetv3": {
+    "glioma": 0.8806,
+    "meningioma": 0.9332,
+    "notumor": 0.9569,
+    "pituitary": 0.9876
+  },
+  "swin_t": {
+    "glioma": 0.8715,
+    "meningioma": 0.9207,
+    "notumor": 0.9662,
+    "pituitary": 0.9925
+  },
+  "vit": {
+    "glioma": 0.879,
+    "meningioma": 0.918,
+    "notumor": 0.972,
+    "pituitary": 0.9801
+  },
+  "resnet50": {
+    "glioma": 0.9103,
+    "meningioma": 0.9395,
+    "notumor": 0.9709,
+    "pituitary": 0.9938
+  }
+}

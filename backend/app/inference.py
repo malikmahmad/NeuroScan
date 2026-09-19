@@ -8,9 +8,15 @@ from PIL import Image
 from torchvision import transforms
 
 from .models import (
-    build_custom_cnn, build_efficientnet, build_vit,
-    build_resnet50, build_densenet121, build_mobilenetv3, build_swin_t,
-    UNet, CLASS_NAMES,
+    build_custom_cnn,
+    build_efficientnet,
+    build_vit,
+    build_resnet50,
+    build_densenet121,
+    build_mobilenetv3,
+    build_swin_t,
+    UNet,
+    CLASS_NAMES,
 )
 from .gradcam import GradCAM, vit_attention_rollout, blend_cam_overlay
 
@@ -74,13 +80,13 @@ class ModelRegistry:
 
     def status(self) -> dict:
         return {
-            "cnn":              (MODELS_DIR / "cnn_best.pth").exists(),
-            "efficientnet":     (MODELS_DIR / "efficientnet_best.pth").exists(),
-            "vit":              (MODELS_DIR / "vit_best.pth").exists(),
-            "resnet50":         (MODELS_DIR / "resnet50_best.pth").exists(),
-            "densenet121":      (MODELS_DIR / "densenet121_best.pth").exists(),
-            "mobilenetv3":      (MODELS_DIR / "mobilenetv3_best.pth").exists(),
-            "swin_t":           (MODELS_DIR / "swin_t_best.pth").exists(),
+            "cnn": (MODELS_DIR / "cnn_best.pth").exists(),
+            "efficientnet": (MODELS_DIR / "efficientnet_best.pth").exists(),
+            "vit": (MODELS_DIR / "vit_best.pth").exists(),
+            "resnet50": (MODELS_DIR / "resnet50_best.pth").exists(),
+            "densenet121": (MODELS_DIR / "densenet121_best.pth").exists(),
+            "mobilenetv3": (MODELS_DIR / "mobilenetv3_best.pth").exists(),
+            "swin_t": (MODELS_DIR / "swin_t_best.pth").exists(),
             "unet_segmentation": (MODELS_DIR / "unet_best.pth").exists(),
         }
 
@@ -100,17 +106,13 @@ class ModelRegistry:
     @property
     def efficientnet(self):
         if self._efficientnet is None:
-            self._efficientnet = _load_checkpoint(
-                build_efficientnet(), "efficientnet_best.pth"
-            )
+            self._efficientnet = _load_checkpoint(build_efficientnet(), "efficientnet_best.pth")
         return self._efficientnet
 
     @property
     def efficientnet_gradcam(self) -> GradCAM:
         if self._eff_gradcam is None:
-            self._eff_gradcam = GradCAM(
-                self.efficientnet, self.efficientnet.features[-1]
-            )
+            self._eff_gradcam = GradCAM(self.efficientnet, self.efficientnet.features[-1])
         return self._eff_gradcam
 
     @property
@@ -134,33 +136,25 @@ class ModelRegistry:
     @property
     def densenet121(self):
         if self._densenet121 is None:
-            self._densenet121 = _load_checkpoint(
-                build_densenet121(), "densenet121_best.pth"
-            )
+            self._densenet121 = _load_checkpoint(build_densenet121(), "densenet121_best.pth")
         return self._densenet121
 
     @property
     def densenet121_gradcam(self) -> GradCAM:
         if self._densenet121_gradcam is None:
-            self._densenet121_gradcam = GradCAM(
-                self.densenet121, self.densenet121.features.denseblock4
-            )
+            self._densenet121_gradcam = GradCAM(self.densenet121, self.densenet121.features.denseblock4)
         return self._densenet121_gradcam
 
     @property
     def mobilenetv3(self):
         if self._mobilenetv3 is None:
-            self._mobilenetv3 = _load_checkpoint(
-                build_mobilenetv3(), "mobilenetv3_best.pth"
-            )
+            self._mobilenetv3 = _load_checkpoint(build_mobilenetv3(), "mobilenetv3_best.pth")
         return self._mobilenetv3
 
     @property
     def mobilenetv3_gradcam(self) -> GradCAM:
         if self._mobilenetv3_gradcam is None:
-            self._mobilenetv3_gradcam = GradCAM(
-                self.mobilenetv3, self.mobilenetv3.features[-1]
-            )
+            self._mobilenetv3_gradcam = GradCAM(self.mobilenetv3, self.mobilenetv3.features[-1])
         return self._mobilenetv3_gradcam
 
     @property
@@ -190,9 +184,7 @@ def _cnn_target_layer(model):
     return model[14]
 
 
-def classify(
-    image: Image.Image, model_name: str = "efficientnet", explain: bool = True
-) -> dict:
+def classify(image: Image.Image, model_name: str = "efficientnet", explain: bool = True) -> dict:
     input_tensor = classify_transform(image.convert("RGB")).unsqueeze(0).to(DEVICE)
 
     # CNN-based models use Grad-CAM; transformers use Attention Rollout
@@ -244,9 +236,7 @@ def classify(
     elif model_name == "vit":
         model = registry.vit
         cam, pred_idx, probs = (
-            vit_attention_rollout(model, input_tensor)
-            if explain
-            else _forward_only(model, input_tensor)
+            vit_attention_rollout(model, input_tensor) if explain else _forward_only(model, input_tensor)
         )
         method = "Attention Rollout"
 
@@ -254,9 +244,7 @@ def classify(
         model = registry.swin_t
         # Swin Transformer uses attention rollout via timm's built-in attn
         cam, pred_idx, probs = (
-            _swin_explain(model, input_tensor)
-            if explain
-            else _forward_only(model, input_tensor)
+            _swin_explain(model, input_tensor) if explain else _forward_only(model, input_tensor)
         )
         method = "Attention Rollout"
 
@@ -272,9 +260,7 @@ def classify(
     }
 
     if explain and cam is not None:
-        result["explainability_overlay_png_base64"] = _pil_to_b64(
-            blend_cam_overlay(image, cam)
-        )
+        result["explainability_overlay_png_base64"] = _pil_to_b64(blend_cam_overlay(image, cam))
 
     return result
 
@@ -291,16 +277,19 @@ def _forward_only(model, input_tensor):
 @torch.no_grad()
 def _swin_explain(model, input_tensor):
     """
-    Simple gradient-free attention map for Swin Transformer.
-    Uses the final norm output as a spatial importance proxy,
-    averaged across channels and upsampled to image size.
+    Attention-based visualization for Swin Transformer.
+    Hooks onto the final LayerNorm output (shape: 1 x H x W x C),
+    averages across channels to produce a spatial importance map,
+    and upsamples to input resolution.
+    This is described as an exploratory feature-activation visualization,
+    not standard Attention Rollout, because Swin-T uses hierarchical
+    windowed attention and does not have a global CLS token.
     """
     features = []
 
     def hook_fn(module, input, output):
         features.append(output.detach())
 
-    # Hook onto the last norm layer
     handle = model.norm.register_forward_hook(hook_fn)
     output = model(input_tensor)
     handle.remove()
@@ -308,37 +297,32 @@ def _swin_explain(model, input_tensor):
     pred_idx = output.argmax(dim=1).item()
     probs = torch.softmax(output, dim=1).cpu().numpy()[0]
 
+    cam = None
     if features:
-        feat = features[0]  # (1, H*W, C) for swin
-        # Reshape to spatial grid
-        n_tokens = feat.shape[1]
-        grid = int(n_tokens ** 0.5)
-        if grid * grid == n_tokens:
-            cam = feat[0].mean(dim=-1).reshape(grid, grid).cpu().numpy()
+        feat = features[0]  # (1, H, W, C) for Swin-T
+        if feat.dim() == 4:
+            # Already spatial: (1, H, W, C) — average over channels
+            cam = feat[0].mean(dim=-1).cpu().numpy()  # (H, W)
+        elif feat.dim() == 3:
+            # Flattened: (1, H*W, C) — reshape then average
+            n_tokens = feat.shape[1]
+            grid = int(n_tokens**0.5)
+            if grid * grid == n_tokens:
+                cam = feat[0].mean(dim=-1).reshape(grid, grid).cpu().numpy()
+        if cam is not None:
             cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
-        else:
-            cam = None
-    else:
-        cam = None
 
     return cam, pred_idx, probs
 
 
 def classify_ensemble(image: Image.Image) -> dict:
     status = registry.status()
-    available = [
-        name for name, ready in status.items()
-        if ready and name != "unet_segmentation"
-    ]
+    available = [name for name, ready in status.items() if ready and name != "unet_segmentation"]
 
     if not available:
-        raise WeightsNotFoundError(
-            "No classification checkpoints found in backend/models/."
-        )
+        raise WeightsNotFoundError("No classification checkpoints found in backend/models/.")
 
-    per_model = {
-        name: classify(image, model_name=name, explain=True) for name in available
-    }
+    per_model = {name: classify(image, model_name=name, explain=True) for name in available}
 
     avg_probs = {c: 0.0 for c in CLASS_NAMES}
     for res in per_model.values():

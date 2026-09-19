@@ -1,0 +1,38 @@
+{
+  "cnn": {
+    "b": 283,
+    "c": 6,
+    "pvalue": 0.0,
+    "significant": true
+  },
+  "efficientnet": {
+    "b": 75,
+    "c": 13,
+    "pvalue": 0.0,
+    "significant": true
+  },
+  "densenet121": {
+    "b": 40,
+    "c": 15,
+    "pvalue": 0.001016,
+    "significant": true
+  },
+  "mobilenetv3": {
+    "b": 36,
+    "c": 15,
+    "pvalue": 0.004601,
+    "significant": true
+  },
+  "swin_t": {
+    "b": 38,
+    "c": 14,
+    "pvalue": 0.001195,
+    "significant": true
+  },
+  "vit": {
+    "b": 38,
+    "c": 13,
+    "pvalue": 0.000621,
+    "significant": true
+  }
+}

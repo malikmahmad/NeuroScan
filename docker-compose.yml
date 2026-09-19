@@ -1,10 +1,7 @@
 version: "3.9"
-
-# NeuroScan Research Backend
-# Runs the FastAPI inference server with all four model endpoints.
-#
-# Frontend web application is maintained separately:
-# https://github.com/malikmahmad/NeuroScan-Frontend
+# NeuroScan — FastAPI inference backend
+# Runs the FastAPI inference server with all 8 model endpoints.
+# Frontend: see frontend/ directory (npm run dev).
 
 services:
   backend:

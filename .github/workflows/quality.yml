@@ -8,7 +8,7 @@ on:
 
 jobs:
   python-lint:
-    name: Python lint (flake8, black)
+    name: Python lint (black, flake8)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,15 +19,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install lint tools
-        run: pip install flake8 black
+        run: pip install black==26.5.1 flake8==7.3.0
 
-      - name: black --format and commit
-        run: |
-          black --line-length 110 backend/app/ backend/tests/
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git diff --quiet || git commit -am "style: auto-format with black (line-length 110)"
-          git push || true
+      - name: black --check
+        run: black --check --line-length 110 backend/app/ backend/tests/
 
       - name: flake8
         run: flake8 backend/app/ backend/tests/ --max-line-length=110 --extend-ignore=E203
@@ -45,11 +40,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install mypy
-          pip install fastapi uvicorn Pillow numpy python-multipart matplotlib
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install mypy \
+            fastapi==0.138.1 \
+            "uvicorn[standard]==0.49.0" \
+            Pillow==12.2.0 \
+            numpy==2.4.6 \
+            python-multipart==0.0.32 \
+            matplotlib==3.11.0
+          pip install torch==2.12.1+cpu torchvision==0.27.1+cpu \
+            --index-url https://download.pytorch.org/whl/cpu
 
       - name: mypy
-        continue-on-error: true
         run: mypy backend/app/ --ignore-missing-imports

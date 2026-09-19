@@ -6,7 +6,9 @@ NUM_CLASSES = 4
 CLASS_NAMES = ["glioma", "meningioma", "notumor", "pituitary"]
 
 
-def build_custom_cnn(num_classes: int = NUM_CLASSES) -> nn.Module:
+def build_custom_cnn(num_classes: int = NUM_CLASSES, pretrained: bool = False) -> nn.Module:
+    # pretrained param accepted for API consistency but CNN has no pretrained weights
+    del pretrained
     return nn.Sequential(
         nn.Conv2d(3, 32, 3, padding=1),
         nn.BatchNorm2d(32),
@@ -34,8 +36,9 @@ def build_custom_cnn(num_classes: int = NUM_CLASSES) -> nn.Module:
     )
 
 
-def build_efficientnet(num_classes: int = NUM_CLASSES) -> nn.Module:
-    model = models.efficientnet_b0(weights=None)
+def build_efficientnet(num_classes: int = NUM_CLASSES, pretrained: bool = False) -> nn.Module:
+    weights = models.EfficientNet_B0_Weights.IMAGENET1K_V1 if pretrained else None
+    model = models.efficientnet_b0(weights=weights)
     in_features = model.classifier[1].in_features
     model.classifier = nn.Sequential(
         nn.Dropout(0.3),
@@ -44,15 +47,17 @@ def build_efficientnet(num_classes: int = NUM_CLASSES) -> nn.Module:
     return model
 
 
-def build_vit(num_classes: int = NUM_CLASSES) -> nn.Module:
-    model = models.vit_b_16(weights=None)
+def build_vit(num_classes: int = NUM_CLASSES, pretrained: bool = False) -> nn.Module:
+    weights = models.ViT_B_16_Weights.IMAGENET1K_V1 if pretrained else None
+    model = models.vit_b_16(weights=weights)
     in_features = model.heads.head.in_features
     model.heads.head = nn.Linear(in_features, num_classes)
     return model
 
 
-def build_resnet50(num_classes: int = NUM_CLASSES) -> nn.Module:
-    model = models.resnet50(weights=None)
+def build_resnet50(num_classes: int = NUM_CLASSES, pretrained: bool = False) -> nn.Module:
+    weights = models.ResNet50_Weights.IMAGENET1K_V1 if pretrained else None
+    model = models.resnet50(weights=weights)
     model.fc = nn.Sequential(
         nn.Dropout(0.3),
         nn.Linear(model.fc.in_features, num_classes),
@@ -60,8 +65,9 @@ def build_resnet50(num_classes: int = NUM_CLASSES) -> nn.Module:
     return model
 
 
-def build_densenet121(num_classes: int = NUM_CLASSES) -> nn.Module:
-    model = models.densenet121(weights=None)
+def build_densenet121(num_classes: int = NUM_CLASSES, pretrained: bool = False) -> nn.Module:
+    weights = models.DenseNet121_Weights.IMAGENET1K_V1 if pretrained else None
+    model = models.densenet121(weights=weights)
     model.classifier = nn.Sequential(
         nn.Dropout(0.3),
         nn.Linear(model.classifier.in_features, num_classes),
@@ -69,27 +75,26 @@ def build_densenet121(num_classes: int = NUM_CLASSES) -> nn.Module:
     return model
 
 
-def build_mobilenetv3(num_classes: int = NUM_CLASSES) -> nn.Module:
-    model = models.mobilenet_v3_large(weights=None)
+def build_mobilenetv3(num_classes: int = NUM_CLASSES, pretrained: bool = False) -> nn.Module:
+    weights = models.MobileNet_V3_Large_Weights.IMAGENET1K_V1 if pretrained else None
+    model = models.mobilenet_v3_large(weights=weights)
     in_features = model.classifier[-1].in_features
     model.classifier[-1] = nn.Linear(in_features, num_classes)
     return model
 
 
-def build_swin_t(num_classes: int = NUM_CLASSES) -> nn.Module:
+def build_swin_t(num_classes: int = NUM_CLASSES, pretrained: bool = False) -> nn.Module:
     try:
         import timm
+
         model = timm.create_model(
             "swin_tiny_patch4_window7_224",
-            pretrained=False,
+            pretrained=pretrained,
             num_classes=num_classes,
         )
         return model
     except ImportError:
-        raise ImportError(
-            "timm is required for Swin Transformer. "
-            "Install it with: pip install timm==1.0.9"
-        )
+        raise ImportError("timm is required for Swin Transformer. Install it with: pip install timm==1.0.9")
 
 
 class DoubleConv(nn.Module):
@@ -146,11 +151,11 @@ class UNet(nn.Module):
 
 
 MODEL_BUILDERS = {
-    "cnn":         build_custom_cnn,
+    "cnn": build_custom_cnn,
     "efficientnet": build_efficientnet,
-    "vit":         build_vit,
-    "resnet50":    build_resnet50,
+    "vit": build_vit,
+    "resnet50": build_resnet50,
     "densenet121": build_densenet121,
     "mobilenetv3": build_mobilenetv3,
-    "swin_t":      build_swin_t,
+    "swin_t": build_swin_t,
 }

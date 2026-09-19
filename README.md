@@ -3,9 +3,9 @@
 <div align="center">
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.10+-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.12+-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![arXiv](https://img.shields.io/badge/arXiv-2026.xxxxx-b31b1b.svg)](https://arxiv.org/)
+[![arXiv](https://img.shields.io/badge/Paper-Forthcoming-b31b1b.svg)](paper/paper_outline.md)
 [![Tests](https://github.com/malikmahmad/NeuroScan/actions/workflows/tests.yml/badge.svg)](https://github.com/malikmahmad/NeuroScan/actions/workflows/tests.yml)
 
 **A rigorous comparative study of deep learning architectures for automated brain tumor classification and segmentation from MRI scans.**
@@ -22,7 +22,11 @@ NeuroScan is a comprehensive research framework that evaluates **seven deep lear
 
 - **Custom CNN** (baseline, trained from scratch)
 - **EfficientNet-B0** (transfer learning from ImageNet)
-- **Vision Transformer (ViT-B/16)** (modern attention-based architecture)
+- **MobileNetV3-Large** (lightweight transfer learning)
+- **DenseNet-121** (densely connected transfer learning)
+- **ResNet-50** (best performing, 95.44% accuracy)
+- **Swin-T** (hierarchical vision transformer)
+- **Vision Transformer (ViT-B/16)** (pure attention architecture)
 
 Additionally, we integrate **U-Net segmentation** for tumor localization and implement **architecture-appropriate explainability methods** (Grad-CAM for CNNs, Attention Rollout for transformers).
 
@@ -43,24 +47,26 @@ Additionally, we integrate **U-Net segmentation** for tumor localization and imp
 
 ### Classification Performance (1,600-image held-out test set)
 
-| Model | Accuracy | Macro F1 | Weighted F1 | ROC-AUC (OvR) |
-|:------|:--------:|:--------:|:-----------:|:-------------:|
-| Custom CNN | 78.19% | 0.769 | 0.769 | 0.926 |
-| EfficientNet-B0 | 91.56% | 0.913 | 0.913 | 0.985 |
-| DenseNet-121 | 94.25% | 0.941 | 0.941 | 0.986 |
-| MobileNetV3-Large | 94.25% | 0.941 | 0.941 | 0.991 |
-| Swin-T | 94.81% | 0.947 | 0.947 | 0.990 |
-| ResNet-50 | 95.25% | 0.951 | 0.951 | 0.991 |
-| **ViT-B/16** | **94.69%** | **0.946** | **0.946** | **0.990** |
+| Model | Accuracy | 95% CI | Macro F1 | Weighted F1 | ROC-AUC (OvR) |
+|:------|:--------:|:------:|:--------:|:-----------:|:-------------:|
+| Custom CNN | 78.12% | [76.03, 80.08] | 0.769 | 0.769 | 0.926 |
+| EfficientNet-B0 | 91.56% | [90.10, 92.83] | 0.913 | 0.913 | 0.985 |
+| DenseNet-121 | 93.87% | [92.59, 94.95] | 0.937 | 0.937 | 0.989 |
+| MobileNetV3-Large | 94.13% | [92.86, 95.18] | 0.940 | 0.940 | 0.988 |
+| Swin-T | 93.94% | [92.66, 95.00] | 0.938 | 0.938 | 0.987 |
+| ViT-B/16 | 93.87% | [92.59, 94.95] | 0.937 | 0.937 | 0.991 |
+| **ResNet-50** | **95.44%** | **[94.30, 96.36]** | **0.954** | **0.954** | **0.990** |
 
-### Per-Class Performance (ViT-B/16)
+95% confidence intervals computed using the Wilson score method on the 1,600-image held-out test set.
 
-| Class | Precision | Recall | F1-Score | Support |
-|:------|:---------:|:------:|:--------:|:-------:|
-| Glioma | 0.991 | 0.825 | 0.900 | 400 |
-| Meningioma | 0.879 | 0.983 | 0.928 | 400 |
-| No Tumor | 0.941 | 1.000 | 0.970 | 400 |
-| Pituitary | 0.992 | 0.980 | 0.986 | 400 |
+### Per-Class Performance (ResNet-50, Best Model)
+
+| Class | F1-Score |
+|:------|:--------:|
+| Glioma | 0.910 |
+| Meningioma | 0.940 |
+| No Tumor | 0.971 |
+| Pituitary Tumor | 0.994 |
 
 ### Segmentation Performance (U-Net, 589-slice held-out test set)
 
@@ -362,7 +368,7 @@ file: <MRI image>
 
 #### Full Analysis
 ```http
-POST /api/analyze?classifier={cnn|efficientnet|vit}
+POST /api/analyze?classifier={cnn|efficientnet|vit|resnet50|densenet121|mobilenetv3|swin_t}
 Content-Type: multipart/form-data
 
 file: <MRI image>
@@ -466,13 +472,13 @@ NeuroScan/
 
 | Method | Accuracy | Notes | Reference |
 |:-------|:--------:|:------|:----------|
-| Custom CNN (this work) | 78.19% | Baseline, no pretraining | — |
+| Custom CNN (this work) | 78.12% | Baseline, no pretraining | — |
 | EfficientNet-B0 (this work) | 91.56% | Last 2 blocks fine-tuned | — |
-| DenseNet-121 (this work) | 94.25% | DenseBlock4 fine-tuned | — |
-| MobileNetV3 (this work) | 94.25% | Last 3 blocks fine-tuned | — |
-| Swin-T (this work) | 94.81% | Last stage fine-tuned | — |
-| **ViT-B/16 (this work)** | **94.69%** | Last encoder block fine-tuned | — |
-| **ResNet-50 (this work)** | **95.25%** | Layer4 fine-tuned | — |
+| DenseNet-121 (this work) | 93.87% | DenseBlock4 fine-tuned | — |
+| MobileNetV3 (this work) | 94.13% | Last 3 blocks fine-tuned | — |
+| Swin-T (this work) | 93.94% | Last stage fine-tuned | — |
+| ViT-B/16 (this work) | 93.87% | Last encoder block fine-tuned | — |
+| **ResNet-50 (this work)** | **95.44%** | Layer4 fine-tuned | — |
 | EfficientNetV2b0 | 99.16% | Full backbone fine-tune | Hassan & Ghadiri, *Comp. Biol. Med.*, 2025 |
 | EfficientNetV2 + Attention | 99.76% | Custom attention modules | Pacal, *Cluster Comput.*, 2024 |
 
@@ -517,7 +523,7 @@ If you use this work, please cite:
 }
 ```
 
-**Paper:** [arXiv:2026.xxxxx] (Forthcoming)
+**Paper draft:** [`paper/paper_outline.md`](paper/paper_outline.md) (IEEE-format, includes full results, statistical tests, and methodology)
 
 ---
 
@@ -565,7 +571,7 @@ MNS University of Engineering and Technology, Multan
 
 - **GitHub:** [@malikmahmad](https://github.com/malikmahmad)
 - **LinkedIn:** [malik-muhammad-ahmad](https://www.linkedin.com/in/malik-muhammad-ahmad-788b62338/)
-- **Email:** [malikmahmad@example.com](mailto:malikmahmad@example.com)
+- **Email:** <!-- TODO: replace with real email before publishing -->
 
 ---
 

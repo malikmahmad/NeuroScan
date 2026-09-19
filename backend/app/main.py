@@ -63,9 +63,7 @@ SEGMENTATION_METRICS_DIR = next(
 
 def _read_image(upload: UploadFile) -> Image.Image:
     if not upload.content_type or not upload.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=400, detail="Expected an image file (PNG, JPEG, or TIFF)."
-        )
+        raise HTTPException(status_code=400, detail="Expected an image file (PNG, JPEG, or TIFF).")
     try:
         data = upload.file.read()
         img = Image.open(io.BytesIO(data))
@@ -75,9 +73,7 @@ def _read_image(upload: UploadFile) -> Image.Image:
     rgb = img.convert("RGB")
     arr = np.array(rgb, dtype=np.float32)
     r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
-    channel_diff = (
-        np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()
-    ) / 3.0
+    channel_diff = (np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()) / 3.0
     if channel_diff > 18.0:
         raise HTTPException(
             status_code=422,
@@ -169,9 +165,7 @@ def classify_endpoint(
 ):
     image = _read_image(file)
     try:
-        return JSONResponse(
-            inference.classify(image, model_name=model_name, explain=True)
-        )
+        return JSONResponse(inference.classify(image, model_name=model_name, explain=True))
     except WeightsNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
 

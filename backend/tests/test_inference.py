@@ -90,9 +90,7 @@ def test_grayscale_image_passes_channel_check():
     gray_val = 128
     rgb = np.full((64, 64, 3), gray_val, dtype=np.float32)
     r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
-    channel_diff = (
-        np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()
-    ) / 3.0
+    channel_diff = (np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()) / 3.0
     assert channel_diff < 18.0
 
 
@@ -100,7 +98,5 @@ def test_colorful_image_fails_channel_check():
     img = np.zeros((64, 64, 3), dtype=np.float32)
     img[:, :, 1] = 255
     r, g, b = img[:, :, 0], img[:, :, 1], img[:, :, 2]
-    channel_diff = (
-        np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()
-    ) / 3.0
+    channel_diff = (np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()) / 3.0
     assert channel_diff > 18.0
