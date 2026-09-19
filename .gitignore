@@ -27,3 +27,8 @@ frontend/node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# Personal/draft files — not for public repo
+cover.html
+NEUROSCAN_ARTICLE.md
+LINKEDIN_POST.md
