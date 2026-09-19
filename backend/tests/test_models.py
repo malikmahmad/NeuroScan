@@ -81,3 +81,4 @@ class TestUNet:
             probs = torch.sigmoid(logits)
         assert probs.min() >= 0.0
         assert probs.max() <= 1.0
+

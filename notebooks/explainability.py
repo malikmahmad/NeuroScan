@@ -184,3 +184,5 @@ for cls in CLASS_NAMES:
     samples = list((TEST_DIR / cls).glob("*"))[:1]
     for img_path in samples:
         visualize(img_path, cls)
+
+

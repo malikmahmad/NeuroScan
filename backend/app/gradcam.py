@@ -95,3 +95,5 @@ def blend_cam_overlay(pil_image: Image.Image, cam: np.ndarray, alpha: float = 0.
     overlay = (1 - alpha) * base + alpha * heatmap
 
     return Image.fromarray((np.clip(overlay, 0, 1) * 255).astype(np.uint8))
+
+

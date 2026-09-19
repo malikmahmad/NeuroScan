@@ -603,3 +603,4 @@ MIT License — see [LICENSE](LICENSE) for details.
 [Report Bug](https://github.com/malikmahmad/NeuroScan/issues) • [Request Feature](https://github.com/malikmahmad/NeuroScan/issues) • [Discussions](https://github.com/malikmahmad/NeuroScan/discussions)
 
 </div>
+

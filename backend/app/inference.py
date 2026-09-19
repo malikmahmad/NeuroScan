@@ -377,3 +377,4 @@ def full_analysis(image: Image.Image, classifier: str = "efficientnet") -> dict:
             }
 
     return result
+

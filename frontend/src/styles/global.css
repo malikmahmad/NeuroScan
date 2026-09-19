@@ -236,3 +236,4 @@ section[id] { scroll-margin-top: calc(var(--nav-height) + 16px); }
     transition-duration: 0.001ms !important;
   }
 }
+

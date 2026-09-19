@@ -360,3 +360,5 @@ plt.xticks(rotation=0)
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR / "figures" / "model_comparison_accuracy.png", dpi=150)
 plt.show()
+
+

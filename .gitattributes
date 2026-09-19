@@ -12,3 +12,4 @@ backend/venv*/* linguist-vendored
 # Emphasize Jupyter notebooks
 *.ipynb linguist-detectable
 notebooks/*.ipynb linguist-detectable
+

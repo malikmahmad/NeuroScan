@@ -201,3 +201,4 @@ def analyze_endpoint(
         return JSONResponse(inference.full_analysis(image, classifier=classifier))
     except WeightsNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
+

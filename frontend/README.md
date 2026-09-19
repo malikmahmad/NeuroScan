@@ -1,12 +1,11 @@
 <div align="center">
 
-# 🧠 NeuroScan WebApp
+# 🧠 NeuroScan — Frontend
 
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=flat&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Three.js](https://img.shields.io/badge/Three.js-r169-000000?style=flat&logo=threedotjs&logoColor=white)](https://threejs.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 
 **React + TypeScript frontend for the NeuroScan brain tumor MRI analysis system.**
 
@@ -18,39 +17,37 @@
 
 ---
 
-## 🧠 What Is This?
+## What Is This?
 
-NeuroScan WebApp is the frontend for the [NeuroScan research framework](https://github.com/malikmahmad/NeuroScan) — a comparative deep learning system that classifies brain tumors from MRI scans using **seven independently trained architectures** (CNN, EfficientNet-B0, ResNet-50, DenseNet-121, MobileNetV3, Swin-T, ViT-B/16) and segments tumor regions using U-Net.
-
-This interface lets you interact with the full pipeline without touching the command line.
+This is the frontend component of the [NeuroScan research framework](https://github.com/malikmahmad/NeuroScan) — a comparative deep learning system that classifies brain tumors from MRI scans using **seven independently trained architectures** (CNN, EfficientNet-B0, ResNet-50, DenseNet-121, MobileNetV3, Swin-T, ViT-B/16) and segments tumor regions using U-Net.
 
 ---
 
-## ✨ Features
+## Features
 
-- **🩻 MRI Upload** — Drag-and-drop or click to upload axial brain MRI slices
-- **🤖 Single Model Mode** — Choose from 7 architectures, each with architecture-correct explainability overlay
-- **⚖️ Comparison Mode** — All 7 models side-by-side with averaged ensemble prediction
-- **🗺️ Segmentation View** — U-Net tumor mask and probability overlay when tumor is detected
-- **📊 Live Metrics Dashboard** — Real accuracy, F1, ROC-AUC pulled from training JSON files at runtime
-- **🌐 3D Network Visualization** — Interactive Three.js animated model network in the hero section
-- **📄 PDF Export** — Client-side report generation for a single prediction result
-- **🌙 Dark / Light Theme** — Persisted across sessions via `localStorage`
-- **📱 Responsive** — Works on desktop and tablet
+- **MRI Upload** — Drag-and-drop or click to upload axial brain MRI slices
+- **Single Model Mode** — Choose from 7 architectures, each with architecture-correct explainability overlay
+- **Comparison Mode** — All 7 models side-by-side with averaged ensemble prediction
+- **Segmentation View** — U-Net tumor mask and probability overlay when tumor is detected
+- **Live Metrics Dashboard** — Real accuracy, F1, ROC-AUC pulled from training JSON files at runtime
+- **Network Visualization** — Animated HTML5 Canvas model network panel
+- **PDF Export** — Client-side report generation via jsPDF
+- **Dark / Light Theme** — Persisted across sessions via `localStorage`
+- **Responsive** — Works on desktop and tablet
 
 ---
 
-## 📊 Model Results (held-out test set, 1,600 images)
+## Model Results (held-out test set, 1,600 images)
 
 | Model | Accuracy | Macro F1 | ROC-AUC | Explainability |
 |:------|:--------:|:--------:|:-------:|:--------------:|
-| Custom CNN | 78.2% | 0.769 | 0.926 | Grad-CAM |
-| EfficientNet-B0 | 91.6% | 0.913 | 0.985 | Grad-CAM |
-| DenseNet-121 | 94.3% | 0.941 | 0.986 | Grad-CAM |
-| MobileNetV3 | 94.3% | 0.941 | 0.991 | Grad-CAM |
-| Swin-T | 94.8% | 0.947 | 0.990 | Attention Rollout |
-| ViT-B/16 | 94.7% | 0.946 | 0.990 | Attention Rollout |
-| **ResNet-50** | **95.3%** | **0.951** | **0.991** | Grad-CAM |
+| Custom CNN | 78.12% | 0.769 | 0.926 | Grad-CAM |
+| EfficientNet-B0 | 91.56% | 0.913 | 0.985 | Grad-CAM |
+| DenseNet-121 | 93.87% | 0.937 | 0.989 | Grad-CAM |
+| MobileNetV3 | 94.13% | 0.940 | 0.988 | Grad-CAM |
+| Swin-T | 93.94% | 0.938 | 0.987 | Attention Rollout |
+| ViT-B/16 | 93.87% | 0.937 | 0.991 | Attention Rollout |
+| **ResNet-50** | **95.44%** | **0.954** | **0.990** | **Grad-CAM** |
 
 U-Net Segmentation: **Dice 0.886 · IoU 0.856** (589-slice held-out test set)
 
@@ -58,102 +55,99 @@ U-Net Segmentation: **Dice 0.886 · IoU 0.856** (589-slice held-out test set)
 
 ---
 
-## 🖥️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |:------|:----------|
 | Framework | React 18 + TypeScript |
 | Build tool | Vite 5 |
-| 3D rendering | Three.js + React Three Fiber + Drei |
-| Visual effects | `@react-three/postprocessing` |
-| PDF generation | jsPDF |
+| Visualization | HTML5 Canvas API |
+| PDF generation | jsPDF 4 |
 | API client | Native `fetch` with typed wrappers (`src/api.ts`) |
 | Styling | Custom CSS (no framework) |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### 1. Clone and install
+### 1. Install
 
 ```bash
-git clone https://github.com/malikmahmad/NeuroScan-WebApp.git
-cd NeuroScan-WebApp
+cd frontend
 npm install
 ```
 
-### 2. Set backend URL
+### 2. Configure backend URL
 
 ```bash
 cp .env.example .env
+# Edit .env: set VITE_API_URL=http://localhost:8000
 ```
 
-Edit `.env`:
-```env
-VITE_API_URL=http://localhost:8000
-```
-
-### 3. Start backend
-
-This frontend needs the [NeuroScan backend](https://github.com/malikmahmad/NeuroScan) running:
+### 3. Start the backend (from repo root)
 
 ```bash
-git clone https://github.com/malikmahmad/NeuroScan.git
-cd NeuroScan/backend
+cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-> Model weights must be trained separately — see the [training guide](https://github.com/malikmahmad/NeuroScan#training).
+> Model weights must be placed in `backend/models/` — see [training guide](https://github.com/malikmahmad/NeuroScan#training).
 
 ### 4. Run frontend
 
 ```bash
 npm run dev
-```
-
-Opens at `http://localhost:5173`
-
----
-
-## 🗂️ Project Structure
-
-```
-src/
-├── App.tsx                          # Root — full single-page layout
-├── ThemeContext.tsx                  # Dark/light mode, persisted to localStorage
-├── api.ts                           # Typed fetch client for all backend endpoints
-├── main.tsx                         # Entry point
-│
-├── components/
-│   ├── Navbar.tsx                   # Top nav with theme toggle
-│   ├── Hero.tsx                     # Landing hero section
-│   ├── Hero3D.tsx                   # Three.js animated 3D model network
-│   ├── HowItWorks.tsx               # Pipeline explainer
-│   ├── Features.tsx                 # Feature highlights
-│   ├── ToolSection.tsx              # 🔧 Main working dashboard
-│   ├── UploadZone.tsx               # Drag-and-drop MRI upload
-│   ├── ModelStatusBar.tsx           # Shows which of the 8 weights are loaded
-│   ├── ResultsPanel.tsx             # Classification + explainability overlay
-│   ├── ComparisonView.tsx           # Multi-model + ensemble results
-│   ├── PremiumAnalysisPanel.tsx     # Full classify → segment pipeline
-│   ├── AnalysisSequence.tsx         # Pipeline step animation
-│   ├── ComparativeNetworkPanel.tsx  # 7-model network visualization
-│   ├── MetricsDashboard.tsx         # Live metrics from /api/metrics/*
-│   ├── About.tsx, FAQ.tsx, PrivacyPolicy.tsx
-│   ├── Footer.tsx
-│   └── ScrollToTop.tsx
-│
-├── hooks/
-│   └── useInView.ts                 # Scroll-triggered fade-in
-│
-└── styles/
-    └── global.css
+# Opens at http://localhost:5173
 ```
 
 ---
 
-## 🔌 API Integration
+## Project Structure
+
+```
+frontend/
+├── index.html
+├── vite.config.ts
+├── package.json
+├── .env.example
+│
+└── src/
+    ├── App.tsx                          # Root — full single-page layout
+    ├── ThemeContext.tsx                  # Dark/light mode, persisted to localStorage
+    ├── api.ts                           # Typed fetch client for all backend endpoints
+    ├── main.tsx                         # Entry point
+    │
+    ├── components/
+    │   ├── Navbar.tsx                   # Top nav with theme toggle
+    │   ├── Hero.tsx                     # Landing hero section
+    │   ├── HowItWorks.tsx               # Pipeline explainer
+    │   ├── Features.tsx                 # Feature highlights
+    │   ├── ToolSection.tsx              # Main working dashboard
+    │   ├── UploadZone.tsx               # Drag-and-drop MRI upload
+    │   ├── ModelStatusBar.tsx           # Shows which of the 8 weights are loaded
+    │   ├── ResultsPanel.tsx             # Classification + explainability overlay
+    │   ├── ComparisonView.tsx           # Multi-model + ensemble results
+    │   ├── PremiumAnalysisPanel.tsx     # Full classify → segment pipeline
+    │   ├── AnalysisSequence.tsx         # Pipeline step animation
+    │   ├── ComparativeNetworkPanel.tsx  # 7-model network visualization (Canvas)
+    │   ├── MetricsDashboard.tsx         # Live metrics from /api/metrics/*
+    │   ├── About.tsx
+    │   ├── FAQ.tsx
+    │   ├── PrivacyPolicy.tsx
+    │   ├── Footer.tsx
+    │   └── ScrollToTop.tsx
+    │
+    ├── hooks/
+    │   └── useInView.ts                 # Scroll-triggered fade-in
+    │
+    └── styles/
+        └── global.css
+```
+
+---
+
+## API Integration
 
 All backend communication is in `src/api.ts` — fully typed:
 
@@ -179,7 +173,7 @@ const analysis = await analyze(file, "vit");
 
 ---
 
-## 📦 Scripts
+## Scripts
 
 | Command | Description |
 |:--------|:------------|
@@ -189,32 +183,7 @@ const analysis = await analyze(file, "vit");
 
 ---
 
-## 🌍 Deploying Live
-
-> The frontend is a static SPA — easy to deploy anywhere. The backend requires a Python server with PyTorch.
-
-### Frontend Only (Vercel / Netlify)
-
-```bash
-npm run build
-# Deploy the dist/ folder
-```
-
-Set `VITE_API_URL` as an environment variable pointing to your live backend.
-
-### Full Stack
-
-| Service | What to deploy |
-|:--------|:--------------|
-| Vercel / Netlify | `dist/` folder (frontend static build) |
-| Render / Railway / Fly.io | FastAPI backend (`backend/`) |
-| Docker | `docker-compose up` (local or VPS) |
-
-**Backend note:** Model weights (`.pth` files) must be trained on Kaggle and placed in `backend/models/`. See [training guide](https://github.com/malikmahmad/NeuroScan#training).
-
----
-
-## ⚙️ Environment Variables
+## Environment Variables
 
 | Variable | Default | Description |
 |:---------|:--------|:------------|
@@ -222,13 +191,7 @@ Set `VITE_API_URL` as an environment variable pointing to your live backend.
 
 ---
 
-## 🔬 Related
-
-- **[NeuroScan](https://github.com/malikmahmad/NeuroScan)** — Research repo: FastAPI backend, 7 PyTorch classifiers, U-Net segmentation, training notebooks, paper outline
-
----
-
-## 👤 Author
+## Author
 
 **Malik Muhammad Ahmad**  
 BS Information Technology — MNS University of Engineering and Technology, Multan
@@ -238,18 +201,7 @@ BS Information Technology — MNS University of Engineering and Technology, Mult
 
 ---
 
-## 📄 License
+## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](../LICENSE) for details.
 
----
-
-<div align="center">
-
-**🧠 NeuroScan WebApp** — Clean · Fast · Research-Connected
-
-⭐ Star this repo if you find it useful!
-
-[🐛 Report Bug](https://github.com/malikmahmad/NeuroScan-WebApp/issues) • [💡 Request Feature](https://github.com/malikmahmad/NeuroScan-WebApp/issues)
-
-</div>

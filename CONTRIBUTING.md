@@ -110,3 +110,5 @@ Roughly in priority order:
 7. **Notebook refactor** — Shared logic (especially model architecture definitions) is duplicated between `notebooks/train_*.py` and `backend/app/models.py`. Making the notebooks import from the backend package would eliminate the risk of silent drift.
 
 If you want to take on something not on this list, open an issue first describing your intent — avoids the situation where a substantial PR conflicts with a direction already planned.
+
+

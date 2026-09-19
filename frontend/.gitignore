@@ -6,11 +6,3 @@ dist/
 .DS_Store
 *.log
 
-# Backend
-backend/venv311/
-backend/venv/
-backend/.venv/
-backend/__pycache__/
-backend/**/__pycache__/
-backend/.pytest_cache/
-backend/models/*.pth

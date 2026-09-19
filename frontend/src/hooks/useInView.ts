@@ -34,3 +34,4 @@ export function useInView<T extends HTMLElement = HTMLElement>(
 
   return { ref, inView };
 }
+

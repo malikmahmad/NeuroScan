@@ -361,3 +361,4 @@ export default function ResultsPanel({ originalImageUrl, result, segmentation }:
     </div>
   );
 }
+

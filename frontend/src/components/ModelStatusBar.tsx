@@ -153,3 +153,4 @@ export default function ModelStatusBar({ status, loading }: Props) {
     </div>
   );
 }
+

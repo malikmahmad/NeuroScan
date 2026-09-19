@@ -318,3 +318,5 @@ if per_class_data and "resnet50" in per_class_data:
         print(f"  {cls}: {f1:.4f}")
 
 print("\nDone. All figures in:", FIG_DIR)
+
+

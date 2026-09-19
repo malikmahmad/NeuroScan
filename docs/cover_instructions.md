@@ -8,3 +8,4 @@ To generate the cover image for README:
 4. This image will be referenced in README.md
 
 The cover.html file is not committed to GitHub (in .gitignore) but the generated PNG screenshot will be.
+

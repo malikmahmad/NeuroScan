@@ -159,3 +159,4 @@ MODEL_BUILDERS = {
     "mobilenetv3": build_mobilenetv3,
     "swin_t": build_swin_t,
 }
+

@@ -207,3 +207,4 @@ export default function ComparisonView({ result }: Props) {
     </div>
   );
 }
+

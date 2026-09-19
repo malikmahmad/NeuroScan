@@ -172,3 +172,4 @@ export default function UploadZone({ onFileSelected, disabled, reset }: Props) {
     </div>
   );
 }
+

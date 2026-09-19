@@ -22,3 +22,5 @@ What did you actually run to confirm this works? Manual testing is fine — just
 ## Breaking changes
 
 Does this change any API response shape, checkpoint loading behavior, or required environment setup? If yes, describe what breaks and what someone upgrading needs to do.
+
+

@@ -100,3 +100,4 @@ def test_colorful_image_fails_channel_check():
     r, g, b = img[:, :, 0], img[:, :, 1], img[:, :, 2]
     channel_diff = (np.abs(r - g).mean() + np.abs(r - b).mean() + np.abs(g - b).mean()) / 3.0
     assert channel_diff > 18.0
+

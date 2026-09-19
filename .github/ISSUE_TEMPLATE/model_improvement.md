@@ -20,3 +20,5 @@ Your best guess at the tradeoff. Accuracy up, but at what cost in training time,
 ## Supporting evidence
 
 Papers, your own experiments, results from a similar dataset elsewhere — anything that backs up why you think this would help. "I tried this on a notebook and got X" with the actual notebook linked is great. A plausible-sounding idea with nothing behind it is still worth opening, just say that's what it is.
+
+

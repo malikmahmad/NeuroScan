@@ -154,3 +154,4 @@ export function analyze(file: File, classifier: ModelName): Promise<AnalyzeResul
     body: form,
   });
 }
+
